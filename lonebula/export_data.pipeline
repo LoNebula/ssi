@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<pipeline>
+
+	<register>
+		<load name="ioput" />
+		<load name="ssiaudio" />
+		<load name="ssigraphic" />
+		<load name="ssiavi" />
+	</register>
+
+	<!-- Read the recorded raw data -->
+	<sensor create="FileReader" path="data/record_user_a" stream="video_A,audio_A,vad_A">
+		<output channel="video" pin="video"/>
+		<output channel="audio" pin="audio"/>
+		<output channel="vad" pin="vad"/>
+	</sensor>
+
+	<!-- Convert Video to AVI -->
+	<consumer create="CameraWriter" path="data/output_video.avi">
+		<input pin="video" frame="1"/>
+	</consumer>
+
+	<!-- Convert Audio to WAV -->
+	<consumer create="WavWriter" path="data/output_audio.wav">
+		<input pin="audio" frame="512"/>
+	</consumer>
+
+	<!-- Convert VAD to CSV (Text) -->
+	<consumer create="FileSampleWriter" path="data/output_vad.csv" format="1">
+		<input pin="vad" frame="1"/>
+	</consumer>
+
+	<object create="Decorator" icon="true" title="Exporting Data...">
+		<area pos="0,0,400,200">console</area>
+	</object>
+
+</pipeline>

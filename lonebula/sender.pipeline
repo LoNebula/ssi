@@ -46,7 +46,7 @@
 	<!-- Network Streamers -->
 	<!-- Replace 'localhost' with the IP address of the receiver computer -->
 	<!-- Sending Video -->
-	<consumer create="SocketWriter" url="udp://localhost:9000" format="1" compression="1">
+	<consumer create="SocketWriter" url="udp://localhost:9000" format="3" compression="1">
 		<input pin="camera" frame="1" />
 	</consumer>	
 	

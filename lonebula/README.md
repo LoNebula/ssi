@@ -26,8 +26,10 @@ SSIのネットワークソケット機能 (`SocketReader`/`SocketWriter`) を�
 
 ### 1. 受信側 (Receiver) の準備
 データの集約を行うPCで `receiver.pipeline` を実行します。
+なお、SSIの実行ファイル (`xmlpipe.exe`) は `..\bin\x64\vc140\` にあるため、以下のコマンドを使用してください。
+
 ```bash
-xmlpipe receiver.pipeline
+..\bin\x64\vc140\xmlpipe.exe receiver.pipeline
 ```
 ※ `receiver.pipeline` 内の `url="udp://..."` 部分のポート番号が、送信側の設定と合っているか確認してください。
 
@@ -37,7 +39,7 @@ xmlpipe receiver.pipeline
 （例: `url="udp://192.168.1.10:9000"`）
 
 ```bash
-xmlpipe sender.pipeline
+..\bin\x64\vc140\xmlpipe.exe sender.pipeline
 ```
 
 これで、受信側のPCに映像・音声・発話状態がリアルタイムで届き、`data` フォルダに保存されます。

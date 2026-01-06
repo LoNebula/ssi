@@ -12,36 +12,40 @@
 	<framework sync="true" slisten="true" sport="1234"/>
 
 	<!-- USER A Receiver Configuration -->
+	
 	<!-- Video from User A -->
-	<sensor create="SocketReader" url="udp://localhost:9000" channel="3" depth="8" width="640" height="480" fps="25.0">
-		<output channel="video" pin="video_A"/>
+	<!-- Using format 1 (raw/uncompressed) to avoid "images do not fit" errors -->
+	<sensor create="SocketReader" url="udp://localhost:9000" format="3" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
+		<output channel="socket" pin="video_A"/>
 	</sensor>
+
 	<!-- Audio from User A -->
-	<sensor create="SocketReader" url="udp://localhost:9001" sampleType="1" sampleRate="44100" channel="1">
-		<output channel="audio" pin="audio_A"/>
+	<!-- Audio scales=true in sender usually means Float (stype=6, sbyte=4). Mono (sdim=1). 44100Hz. -->
+	<sensor create="SocketReader" url="udp://localhost:9001" format="0" ssr="44100.0" sdim="1" stype="6" sbyte="4">
+		<output channel="socket" pin="audio_A"/>
 	</sensor>
+	
 	<!-- VAD from User A -->
-	<sensor create="SocketReader" url="udp://localhost:9002" sampleType="3" sampleRate="25.0" channel="1">
-		<output channel="vad" pin="vad_A"/>
+	<!-- VAD is float output (0.0-1.0). Rough verification of sample rate might be needed, assuming ~50Hz. -->
+	<sensor create="SocketReader" url="udp://localhost:9002" format="0" ssr="50.0" sdim="1" stype="6" sbyte="4">
+		<output channel="socket" pin="vad_A"/>
 	</sensor>
 
 	<!-- USER B Receiver Configuration (Example for 2nd PC) -->
-	<!-- Change ports to match the 2nd sender's config (e.g. 9100, 9101, 9102) -->
-	<!-- For Demo purposes, we comment this out or you can run a second sender on different ports
-	<sensor create="SocketReader" url="udp://localhost:9100" channel="3" depth="8" width="640" height="480" fps="25.0">
-		<output channel="video" pin="video_B"/>
+	<!-- 
+	<sensor create="SocketReader" url="udp://localhost:9100" format="1" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
+		<output channel="socket" pin="video_B"/>
 	</sensor>
-	... etc ...
 	-->
 
 	<!-- Visualization -->
 	<consumer create="VideoPainter:plot" title="User A Video">
 		<input pin="video_A" frame="1"/>
 	</consumer>
-	<consumer create="SignalPainter:plot" title="User A Audio">
+	<consumer create="SignalPainter:plot" title="User A Audio" size="10" type="2">
 		<input pin="audio_A" frame="0.02s"/>
 	</consumer>
-	<consumer create="SignalPainter:plot" title="User A Activity (VAD)">
+	<consumer create="SignalPainter:plot" title="User A Activity (VAD)" size="10" type="0">
 		<input pin="vad_A" frame="1"/>
 	</consumer>
 
