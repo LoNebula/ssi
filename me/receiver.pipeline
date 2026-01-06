@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<pipeline>
+
+	<register>
+		<load name="graphic" />
+		<load name="ioput" />
+		<load name="ssigraphic" />
+		<load name="ssiaudio" />
+	</register>
+	
+	<!-- Framework setup: Acts as synchronization anchor -->
+	<framework sync="true" slisten="true" sport="1234"/>
+
+	<!-- USER A Receiver Configuration -->
+	<!-- Video from User A -->
+	<sensor create="SocketReader" url="udp://localhost:9000" channel="3" depth="8" width="640" height="480" fps="25.0">
+		<output channel="video" pin="video_A"/>
+	</sensor>
+	<!-- Audio from User A -->
+	<sensor create="SocketReader" url="udp://localhost:9001" sampleType="1" sampleRate="44100" channel="1">
+		<output channel="audio" pin="audio_A"/>
+	</sensor>
+	<!-- VAD from User A -->
+	<sensor create="SocketReader" url="udp://localhost:9002" sampleType="3" sampleRate="25.0" channel="1">
+		<output channel="vad" pin="vad_A"/>
+	</sensor>
+
+	<!-- USER B Receiver Configuration (Example for 2nd PC) -->
+	<!-- Change ports to match the 2nd sender's config (e.g. 9100, 9101, 9102) -->
+	<!-- For Demo purposes, we comment this out or you can run a second sender on different ports
+	<sensor create="SocketReader" url="udp://localhost:9100" channel="3" depth="8" width="640" height="480" fps="25.0">
+		<output channel="video" pin="video_B"/>
+	</sensor>
+	... etc ...
+	-->
+
+	<!-- Visualization -->
+	<consumer create="VideoPainter:plot" title="User A Video">
+		<input pin="video_A" frame="1"/>
+	</consumer>
+	<consumer create="SignalPainter:plot" title="User A Audio">
+		<input pin="audio_A" frame="0.02s"/>
+	</consumer>
+	<consumer create="SignalPainter:plot" title="User A Activity (VAD)">
+		<input pin="vad_A" frame="1"/>
+	</consumer>
+
+	<!-- File Recording -->
+	<!-- Records synchronized data to files -->
+	<consumer create="FileWriter" path="data/record_user_a" overwrite="true">
+		<input pin="video_A" frame="1"/>
+		<input pin="audio_A" frame="512"/>
+		<input pin="vad_A" frame="1"/>
+	</consumer>
+
+	<object create="Decorator" icon="true" title="Receiver Station">
+		<area pos="0,0,640,480">plot*</area>
+	</object>
+
+</pipeline>
