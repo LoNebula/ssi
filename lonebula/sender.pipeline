@@ -9,6 +9,7 @@
 		<load name="ssigraphic" />
 		<load name="ssiaudio"/>
 		<load name="ssiioput"/>
+		<load name="microsoftkinect2"/>
 	</register>
 	
 	<!-- Framework setup: Listen for sync if needed, or act as master -->
@@ -23,6 +24,18 @@
 	<!-- Audio Sensor -->
 	<sensor create="Audio" option="audio" scale="true" blockInSamples="512">
 		<output channel="audio" pin="audio"/>
+	</sensor>
+
+	<!-- Kinect Sensor -->
+	<sensor create="MicrosoftKinect2" sr="15.0" trackNearestPersons="6" showFaceTracking="true" showBodyTracking="true">
+		<output channel="rgb" pin="rgb"/>
+		<output channel="depth" pin="depth"/>
+		<output channel="ir" pin="ir"/>
+		<output channel="au" pin="au"/>
+		<output channel="head" pin="head"/>
+		<output channel="skeleton" pin="skel"/>
+		<output channel="face" pin="face"/>
+		<output channel="audio" pin="kinect_audio"/>
 	</sensor>
 	
 	<!-- VAD (Voice Activity Detection) -->
@@ -42,6 +55,24 @@
 	<consumer create="SignalPainter:plot" size="10" type="0" title="Local VAD">
 		<input pin="vad" frame="0.02s" />
 	</consumer>
+	<consumer create="VideoPainter:plot" flip="False" mirror="False" title="rgb">
+		<input pin="rgb" frame="1"/>
+	</consumer>	
+	<consumer create="VideoPainter:plot" flip="False" mirror="False" title="depth">
+		<input pin="depth" frame="1"/>
+	</consumer>
+	<consumer create="VideoPainter:plot" flip="False" mirror="False" title="infrared">
+		<input pin="ir" frame="1"/>
+	</consumer>
+	<consumer create="SignalPainter:plot" title="head" size="10">
+		<input pin="head" frame="0.1s"/>					
+	</consumer>
+	<consumer create="SignalPainter:plot" title="au" size="10">
+		<input pin="au" frame="0.1s"/>					
+	</consumer>
+	<consumer create="SignalPainter:plot" title="kinect_audio" size="10" type="2">
+		<input pin="kinect_audio" frame="0.1s"/>					
+	</consumer>
 	
 	<!-- Network Streamers -->
 	<!-- Replace 'localhost' with the IP address of the receiver computer -->
@@ -59,6 +90,18 @@
 	<!-- Sending VAD signal -->
 	<consumer create="SocketWriter" url="udp://localhost:9002" format="0">
 		<input pin="vad" frame="1" />
+	</consumer>
+
+	<!-- Sending Kinect Audio -->
+	<!-- RGB情報送信-->
+	<consumer create="SocketWriter" url="udp://localhost:9003" format="3">
+		<input pin="rgb" frame="1" />
+	</consumer>
+
+	<!-- Sending Kinect Audio -->
+	<!-- Depth情報送信-->
+	<consumer create="SocketWriter" url="udp://localhost:9004" format="0">
+		<input pin="depth" frame="1" />
 	</consumer>
 
 	<!-- Decoration -->

@@ -31,6 +31,17 @@
 		<output channel="socket" pin="vad_A"/>
 	</sensor>
 
+	<!-- Kinect RGB from User A -->
+	<sensor create="SocketReader" url="udp://localhost:9003" format="3" compression="1">
+		<output channel="socket" pin="rgb"/>
+	</sensor>
+
+	<!-- Kinect Depth from User A -->
+	<!-- Added ssr="30.0" and fixed format to be raw float reading -->
+	<sensor create="SocketReader" url="udp://localhost:9004" format="0" sdim="1" stype="9" sbyte="4" ssr="30.0">
+		<output channel="socket" pin="depth"/>
+	</sensor>
+
 	<!-- USER B Receiver Configuration (Example for 2nd PC) -->
 	<!-- 
 	<sensor create="SocketReader" url="udp://localhost:9100" format="1" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
@@ -48,6 +59,12 @@
 	<consumer create="SignalPainter:plot" title="User A Activity (VAD)" size="10" type="0">
 		<input pin="vad_A" frame="1"/>
 	</consumer>
+	<consumer create="VideoPainter:plot" title="User A RGB">
+		<input pin="rgb" frame="1"/>
+	</consumer>
+	<consumer create="SignalPainter:plot" title="User A Depth" size="10.0" type="1">
+		<input pin="depth" frame="0.1s"/>
+	</consumer>
 
 	<!-- File Recording -->
 	<!-- Records synchronized data to files -->
@@ -55,6 +72,8 @@
 		<input pin="video_A" frame="1"/>
 		<input pin="audio_A" frame="512"/>
 		<input pin="vad_A" frame="1"/>
+		<input pin="rgb" frame="1"/>
+		<input pin="depth" frame="1"/>
 	</consumer>
 
 	<object create="Decorator" icon="true" title="Receiver Station">
