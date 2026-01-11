@@ -15,36 +15,40 @@
 	
 	<!-- Video from User A -->
 	<!-- Using format 1 (raw/uncompressed) to avoid "images do not fit" errors -->
-	<sensor create="SocketReader" url="udp://localhost:9000" format="3" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
-		<output channel="video_A" pin="camera"/>
+	<sensor create="SocketReader" url="udp://localhost:9000" format="3" compression="1" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
+		<output channel="socket" pin="video_A"/>
 	</sensor>
 
 	<!-- Audio from User A -->
-	<!-- Audio scales=true in sender usually means Float (stype=6, sbyte=4). Mono (sdim=1). 44100Hz. -->
-	<sensor create="SocketReader" url="udp://localhost:9001" format="0" ssr="44100.0" sdim="1" stype="6" sbyte="4">
-		<output channel="audio_A" pin="audio"/>
+	<!-- Audio sensor outputs SHORT (stype=3, sbyte=2). Stereo (sdim=2). -->
+	<sensor create="SocketReader" url="udp://localhost:9001" format="0" ssr="48000.0" sdim="2" stype="3" sbyte="2">
+		<output channel="socket" pin="audio_A"/>
 	</sensor>
 	
 	<!-- VAD from User A -->
 	<!-- VAD is float output (0.0-1.0). Rough verification of sample rate might be needed, assuming ~50Hz. -->
 	<sensor create="SocketReader" url="udp://localhost:9002" format="0" ssr="50.0" sdim="1" stype="6" sbyte="4">
-		<output channel="vad_A" pin="vad"/>
+		<output channel="socket" pin="vad_A"/>
 	</sensor>
 
 	<!-- USER B Receiver Configuration -->
+	
 	<!-- Video from User B -->
-	<sensor create="SocketReader" url="udp://localhost:9100" format="3" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
-		<output channel="video_B" pin="camera"/>
+	<!-- Using format 1 (raw/uncompressed) to avoid "images do not fit" errors -->
+	<sensor create="SocketReader" url="udp://localhost:9100" format="3" compression="1" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
+		<output channel="socket" pin="video_B"/>
 	</sensor>
 
 	<!-- Audio from User B -->
-	<sensor create="SocketReader" url="udp://localhost:9101" format="0" ssr="44100.0" sdim="1" stype="6" sbyte="4">
-		<output channel="audio_B" pin="audio"/>
+	<!-- Audio sensor outputs SHORT (stype=3, sbyte=2). Stereo (sdim=2). -->
+	<sensor create="SocketReader" url="udp://localhost:9101" format="0" ssr="48000.0" sdim="2" stype="3" sbyte="2">
+		<output channel="socket" pin="audio_B"/>
 	</sensor>
-
+	
 	<!-- VAD from User B -->
+	<!-- VAD is float output (0.0-1.0). Rough verification of sample rate might be needed, assuming ~50Hz. -->
 	<sensor create="SocketReader" url="udp://localhost:9102" format="0" ssr="50.0" sdim="1" stype="6" sbyte="4">
-		<output channel="vad_B" pin="vad"/>
+		<output channel="socket" pin="vad_B"/>
 	</sensor>
 
 	<!-- Visualization -->
@@ -57,8 +61,7 @@
 	<consumer create="SignalPainter:plot" title="User A Activity (VAD)" size="10" type="0">
 		<input pin="vad_A" frame="1"/>
 	</consumer>
-
-	<!-- User B Visualization -->
+	
 	<consumer create="VideoPainter:plot" title="User B Video">
 		<input pin="video_B" frame="1"/>
 	</consumer>
@@ -76,12 +79,14 @@
 		<input pin="audio_A" frame="512"/>
 		<input pin="vad_A" frame="1"/>
 	</consumer>
-
+	
 	<consumer create="FileWriter" path="data/record_user_b" overwrite="true">
 		<input pin="video_B" frame="1"/>
 		<input pin="audio_B" frame="512"/>
 		<input pin="vad_B" frame="1"/>
 	</consumer>
+	
+	<!-- Decoration -->
 
 	<object create="Decorator" icon="true" title="Receiver Station">
 		<area pos="0,0,640,480">plot*</area>

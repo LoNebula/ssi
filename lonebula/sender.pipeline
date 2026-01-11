@@ -24,7 +24,7 @@
 	<sensor create="Audio" option="audio" scale="true" blockInSamples="512">
 		<output channel="audio" pin="audio"/>
 	</sensor>
-	
+
 	<!-- VAD (Voice Activity Detection) -->
 	<!-- Determines if someone is speaking. Threshold might need tuning. -->
 	<transformer create="AudioActivity" method="0" threshold="0.05">
@@ -39,6 +39,9 @@
 	<consumer create="SignalPainter:plot" title="Local Audio" size="10" type="2">
 		<input pin="audio" frame="0.02s"/>
 	</consumer>
+	<consumer create="SignalPainter:plot" size="10" type="0" title="Local VAD">
+		<input pin="vad" frame="0.02s" />
+	</consumer>
 	
 	<!-- Network Streamers -->
 	<!-- Replace 'localhost' with the IP address of the receiver computer -->
@@ -52,9 +55,8 @@
 	<consumer create="SocketWriter" url="udp://localhost:9001" format="0">
 		<input pin="audio" frame="512" />
 	</consumer>
-
-	<!-- Sending VAD -->
-	<!-- Format 0 for raw float stream -->
+	
+	<!-- Sending VAD signal -->
 	<consumer create="SocketWriter" url="udp://localhost:9002" format="0">
 		<input pin="vad" frame="1" />
 	</consumer>

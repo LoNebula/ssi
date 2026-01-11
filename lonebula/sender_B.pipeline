@@ -13,7 +13,7 @@
 	
 	<!-- Framework setup: Listen for sync if needed, or act as master -->
 	<!-- Change 'sport' to a unique port if running multiple instances on same machine -->
-	<framework sync="true" slisten="false" sport="1235"/>
+	<framework sync="true" slisten="false" sport="1234"/>
 
 	<!-- Camera Sensor -->
 	<sensor create="Camera" option="camera" width="640" height="480" fps="25.0" channel="3" depth="8">
@@ -24,7 +24,7 @@
 	<sensor create="Audio" option="audio" scale="true" blockInSamples="512">
 		<output channel="audio" pin="audio"/>
 	</sensor>
-	
+
 	<!-- VAD (Voice Activity Detection) -->
 	<!-- Determines if someone is speaking. Threshold might need tuning. -->
 	<transformer create="AudioActivity" method="0" threshold="0.05">
@@ -33,33 +33,36 @@
 	</transformer>
 
 	<!-- Visualization for local feedback -->
-	<consumer create="VideoPainter:plot" title="Local Camera User B" flip="true">
+	<consumer create="VideoPainter:plot" title="Local Camera" flip="true">
 		<input pin="camera" frame="1" delta="0"/>
 	</consumer>
-	<consumer create="SignalPainter:plot" title="Local Audio User B" size="10" type="2">
+	<consumer create="SignalPainter:plot" title="Local Audio" size="10" type="2">
 		<input pin="audio" frame="0.02s"/>
+	</consumer>
+	<consumer create="SignalPainter:plot" size="10" type="0" title="Local VAD">
+		<input pin="vad" frame="0.02s" />
 	</consumer>
 	
 	<!-- Network Streamers -->
 	<!-- Replace 'localhost' with the IP address of the receiver computer -->
-	<!-- Sending Video to Port 9100 -->
+	<!-- Sending Video -->
 	<consumer create="SocketWriter" url="udp://localhost:9100" format="3" compression="1">
 		<input pin="camera" frame="1" />
 	</consumer>	
 	
-	<!-- Sending Audio to Port 9101 -->
+	<!-- Sending Audio -->
 	<!-- Format 0 is raw binary usually -->
 	<consumer create="SocketWriter" url="udp://localhost:9101" format="0">
 		<input pin="audio" frame="512" />
 	</consumer>
-
-	<!-- Sending VAD to Port 9102 -->
+	
+	<!-- Sending VAD signal -->
 	<consumer create="SocketWriter" url="udp://localhost:9102" format="0">
 		<input pin="vad" frame="1" />
 	</consumer>
 
 	<!-- Decoration -->
-	<object create="Decorator" icon="true" title="Sender Pipeline User B">
+	<object create="Decorator" icon="true" title="Sender Pipeline">
 		<area pos="0,0,400,300">plot*</area>
 	</object>
 
