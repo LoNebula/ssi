@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<options>
+	<!-- Receiver PC の IP アドレス（ここだけ変更すればOK） -->
+	<item name="receiverIP" value="192.168.11.17"/>
+</options>

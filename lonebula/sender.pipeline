@@ -21,7 +21,7 @@
 	</sensor>
 	
 	<!-- Audio Sensor -->
-	<sensor create="Audio" option="audio" scale="true" blockInSamples="512">
+	<sensor create="Audio" option="audio" scale="true" blockInSamples="512" sr="48000.0" channels="1">
 		<output channel="audio" pin="audio"/>
 	</sensor>
 
@@ -45,8 +45,8 @@
 	
 	<!-- Network Streamers -->
 	<!-- Replace 'localhost' with the IP address of the receiver computer -->
-	<!-- Sending Video -->
-	<consumer create="SocketWriter" url="udp://localhost:9000" format="3" compression="1">
+	<!-- Sending Video (uncompressed) -->
+	<consumer create="SocketWriter" url="udp://localhost:9000" format="3">
 		<input pin="camera" frame="1" />
 	</consumer>	
 	

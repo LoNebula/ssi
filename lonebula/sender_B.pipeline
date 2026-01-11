@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <pipeline>
 
+	<!-- 設定ファイルの読み込み（IPアドレスはここで管理） -->
 	<register>
 		<load name="graphic" />
 		<load name="camera" />
@@ -9,11 +10,12 @@
 		<load name="ssigraphic" />
 		<load name="ssiaudio"/>
 		<load name="ssiioput"/>
+		<var name="config" value="config_sender_B.xml" />
 	</register>
-	
+
 	<!-- Framework setup: Listen for sync if needed, or act as master -->
 	<!-- Change 'sport' to a unique port if running multiple instances on same machine -->
-	<framework sync="true" slisten="false" sport="1234"/>
+	<framework sync="true" slisten="false" sport="1234" shost="$(receiverIP)"/>
 
 	<!-- Camera Sensor -->
 	<sensor create="Camera" option="camera" width="640" height="480" fps="25.0" channel="3" depth="8">
@@ -21,7 +23,7 @@
 	</sensor>
 	
 	<!-- Audio Sensor -->
-	<sensor create="Audio" option="audio" scale="true" blockInSamples="512">
+	<sensor create="Audio" option="audio" scale="true" blockInSamples="512" sr="48000.0" channels="1">
 		<output channel="audio" pin="audio"/>
 	</sensor>
 
@@ -45,19 +47,19 @@
 	
 	<!-- Network Streamers -->
 	<!-- Replace 'localhost' with the IP address of the receiver computer -->
-	<!-- Sending Video -->
-	<consumer create="SocketWriter" url="udp://localhost:9100" format="3" compression="1">
+	<!-- Sending Video (uncompressed) -->
+	<consumer create="SocketWriter" url="udp://$(receiverIP):9100" format="3">
 		<input pin="camera" frame="1" />
 	</consumer>	
 	
 	<!-- Sending Audio -->
 	<!-- Format 0 is raw binary usually -->
-	<consumer create="SocketWriter" url="udp://localhost:9101" format="0">
+	<consumer create="SocketWriter" url="udp://$(receiverIP):9101" format="0">
 		<input pin="audio" frame="512" />
 	</consumer>
 	
 	<!-- Sending VAD signal -->
-	<consumer create="SocketWriter" url="udp://localhost:9102" format="0">
+	<consumer create="SocketWriter" url="udp://$(receiverIP):9102" format="0">
 		<input pin="vad" frame="1" />
 	</consumer>
 
