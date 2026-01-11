@@ -13,7 +13,7 @@
 	
 	<!-- Framework setup: Listen for sync if needed, or act as master -->
 	<!-- Change 'sport' to a unique port if running multiple instances on same machine -->
-	<framework sync="true" slisten="false" sport="1234"/>
+	<framework sync="true" slisten="false" sport="1235"/>
 
 	<!-- Camera Sensor -->
 	<sensor create="Camera" option="camera" width="640" height="480" fps="25.0" channel="3" depth="8">
@@ -33,34 +33,33 @@
 	</transformer>
 
 	<!-- Visualization for local feedback -->
-	<consumer create="VideoPainter:plot" title="Local Camera" flip="true">
+	<consumer create="VideoPainter:plot" title="Local Camera User B" flip="true">
 		<input pin="camera" frame="1" delta="0"/>
 	</consumer>
-	<consumer create="SignalPainter:plot" title="Local Audio" size="10" type="2">
+	<consumer create="SignalPainter:plot" title="Local Audio User B" size="10" type="2">
 		<input pin="audio" frame="0.02s"/>
 	</consumer>
 	
 	<!-- Network Streamers -->
 	<!-- Replace 'localhost' with the IP address of the receiver computer -->
-	<!-- Sending Video -->
-	<consumer create="SocketWriter" url="udp://localhost:9000" format="3" compression="1">
+	<!-- Sending Video to Port 9100 -->
+	<consumer create="SocketWriter" url="udp://localhost:9100" format="3" compression="1">
 		<input pin="camera" frame="1" />
 	</consumer>	
 	
-	<!-- Sending Audio -->
+	<!-- Sending Audio to Port 9101 -->
 	<!-- Format 0 is raw binary usually -->
-	<consumer create="SocketWriter" url="udp://localhost:9001" format="0">
+	<consumer create="SocketWriter" url="udp://localhost:9101" format="0">
 		<input pin="audio" frame="512" />
 	</consumer>
 
-	<!-- Sending VAD -->
-	<!-- Format 0 for raw float stream -->
-	<consumer create="SocketWriter" url="udp://localhost:9002" format="0">
+	<!-- Sending VAD to Port 9102 -->
+	<consumer create="SocketWriter" url="udp://localhost:9102" format="0">
 		<input pin="vad" frame="1" />
 	</consumer>
 
 	<!-- Decoration -->
-	<object create="Decorator" icon="true" title="Sender Pipeline">
+	<object create="Decorator" icon="true" title="Sender Pipeline User B">
 		<area pos="0,0,400,300">plot*</area>
 	</object>
 

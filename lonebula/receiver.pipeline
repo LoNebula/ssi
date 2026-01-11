@@ -16,38 +16,36 @@
 	<!-- Video from User A -->
 	<!-- Using format 1 (raw/uncompressed) to avoid "images do not fit" errors -->
 	<sensor create="SocketReader" url="udp://localhost:9000" format="3" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
-		<output channel="socket" pin="video_A"/>
+		<output channel="video_A" pin="camera"/>
 	</sensor>
 
 	<!-- Audio from User A -->
 	<!-- Audio scales=true in sender usually means Float (stype=6, sbyte=4). Mono (sdim=1). 44100Hz. -->
 	<sensor create="SocketReader" url="udp://localhost:9001" format="0" ssr="44100.0" sdim="1" stype="6" sbyte="4">
-		<output channel="socket" pin="audio_A"/>
+		<output channel="audio_A" pin="audio"/>
 	</sensor>
 	
 	<!-- VAD from User A -->
 	<!-- VAD is float output (0.0-1.0). Rough verification of sample rate might be needed, assuming ~50Hz. -->
 	<sensor create="SocketReader" url="udp://localhost:9002" format="0" ssr="50.0" sdim="1" stype="6" sbyte="4">
-		<output channel="socket" pin="vad_A"/>
+		<output channel="vad_A" pin="vad"/>
 	</sensor>
 
-	<!-- Kinect RGB from User A -->
-	<sensor create="SocketReader" url="udp://localhost:9003" format="3" compression="1">
-		<output channel="socket" pin="rgb"/>
+	<!-- USER B Receiver Configuration -->
+	<!-- Video from User B -->
+	<sensor create="SocketReader" url="udp://localhost:9100" format="3" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
+		<output channel="video_B" pin="camera"/>
 	</sensor>
 
-	<!-- Kinect Depth from User A -->
-	<!-- Added ssr="30.0" and fixed format to be raw float reading -->
-	<sensor create="SocketReader" url="udp://localhost:9004" format="0" sdim="1" stype="9" sbyte="4" ssr="30.0">
-		<output channel="socket" pin="depth"/>
+	<!-- Audio from User B -->
+	<sensor create="SocketReader" url="udp://localhost:9101" format="0" ssr="44100.0" sdim="1" stype="6" sbyte="4">
+		<output channel="audio_B" pin="audio"/>
 	</sensor>
 
-	<!-- USER B Receiver Configuration (Example for 2nd PC) -->
-	<!-- 
-	<sensor create="SocketReader" url="udp://localhost:9100" format="1" swidth="640" sheight="480" sdepth="8" schannels="3" ssr="25.0">
-		<output channel="socket" pin="video_B"/>
+	<!-- VAD from User B -->
+	<sensor create="SocketReader" url="udp://localhost:9102" format="0" ssr="50.0" sdim="1" stype="6" sbyte="4">
+		<output channel="vad_B" pin="vad"/>
 	</sensor>
-	-->
 
 	<!-- Visualization -->
 	<consumer create="VideoPainter:plot" title="User A Video">
@@ -59,11 +57,16 @@
 	<consumer create="SignalPainter:plot" title="User A Activity (VAD)" size="10" type="0">
 		<input pin="vad_A" frame="1"/>
 	</consumer>
-	<consumer create="VideoPainter:plot" title="User A RGB">
-		<input pin="rgb" frame="1"/>
+
+	<!-- User B Visualization -->
+	<consumer create="VideoPainter:plot" title="User B Video">
+		<input pin="video_B" frame="1"/>
 	</consumer>
-	<consumer create="SignalPainter:plot" title="User A Depth" size="10.0" type="1">
-		<input pin="depth" frame="0.1s"/>
+	<consumer create="SignalPainter:plot" title="User B Audio" size="10" type="2">
+		<input pin="audio_B" frame="0.02s"/>
+	</consumer>
+	<consumer create="SignalPainter:plot" title="User B Activity (VAD)" size="10" type="0">
+		<input pin="vad_B" frame="1"/>
 	</consumer>
 
 	<!-- File Recording -->
@@ -72,8 +75,12 @@
 		<input pin="video_A" frame="1"/>
 		<input pin="audio_A" frame="512"/>
 		<input pin="vad_A" frame="1"/>
-		<input pin="rgb" frame="1"/>
-		<input pin="depth" frame="1"/>
+	</consumer>
+
+	<consumer create="FileWriter" path="data/record_user_b" overwrite="true">
+		<input pin="video_B" frame="1"/>
+		<input pin="audio_B" frame="512"/>
+		<input pin="vad_B" frame="1"/>
 	</consumer>
 
 	<object create="Decorator" icon="true" title="Receiver Station">

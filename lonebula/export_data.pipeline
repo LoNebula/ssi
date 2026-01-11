@@ -8,26 +8,48 @@
 		<load name="ssiavi" />
 	</register>
 
-	<!-- Read the recorded raw data -->
-	<sensor create="FileReader" path="data/record_user_a" stream="video_A,audio_A,vad_A">
-		<output channel="video" pin="video"/>
-		<output channel="audio" pin="audio"/>
-		<output channel="vad" pin="vad"/>
+	<!-- Read the recorded raw data for User A -->
+	<sensor create="FileReader" path="data/record_user_a">
+		<output channel="video_A" pin="video_A"/>
+		<output channel="audio_A" pin="audio_A"/>
+		<output channel="vad_A" pin="vad_A"/>
 	</sensor>
 
-	<!-- Convert Video to AVI -->
-	<consumer create="CameraWriter" path="data/output_video.avi">
-		<input pin="video" frame="1"/>
+	<!-- Convert User A Video to AVI -->
+	<consumer create="CameraWriter" path="data/output_video_A.avi">
+		<input pin="video_A" frame="1"/>
 	</consumer>
 
-	<!-- Convert Audio to WAV -->
-	<consumer create="WavWriter" path="data/output_audio.wav">
-		<input pin="audio" frame="512"/>
+	<!-- Convert User A Audio to WAV -->
+	<consumer create="WavWriter" path="data/output_audio_A.wav">
+		<input pin="audio_A" frame="512"/>
 	</consumer>
 
-	<!-- Convert VAD to CSV (Text) -->
-	<consumer create="FileSampleWriter" path="data/output_vad.csv" format="1">
-		<input pin="vad" frame="1"/>
+	<!-- Convert User A VAD to CSV (Text) -->
+	<consumer create="FileSampleWriter" path="data/output_vad_A.csv" format="1">
+		<input pin="vad_A" frame="1"/>
+	</consumer>
+
+	<!-- Read the recorded raw data for User B -->
+	<sensor create="FileReader" path="data/record_user_b">
+		<output channel="video_B" pin="video_B"/>
+		<output channel="audio_B" pin="audio_B"/>
+		<output channel="vad_B" pin="vad_B"/>
+	</sensor>
+
+	<!-- Convert User B Video to AVI -->
+	<consumer create="CameraWriter" path="data/output_video_B.avi">
+		<input pin="video_B" frame="1"/>
+	</consumer>
+
+	<!-- Convert User B Audio to WAV -->
+	<consumer create="WavWriter" path="data/output_audio_B.wav">
+		<input pin="audio_B" frame="512"/>
+	</consumer>
+
+	<!-- Convert User B VAD to CSV (Text) -->
+	<consumer create="FileSampleWriter" path="data/output_vad_B.csv" format="1">
+		<input pin="vad_B" frame="1"/>
 	</consumer>
 
 	<object create="Decorator" icon="true" title="Exporting Data...">
