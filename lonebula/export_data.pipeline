@@ -5,18 +5,32 @@
 		<load name="ioput" />
 		<load name="ssiaudio" />
 		<load name="ssigraphic" />
+		<load name="ssicamera" />
 		<load name="ssiavi" />
 	</register>
 
-	<!-- Read the recorded raw data for User A -->
-	<sensor create="FileReader" path="data/record_user_a">
-		<output channel="video_A" pin="video_A"/>
-		<output channel="audio_A" pin="audio_A"/>
-		<output channel="vad_A" pin="vad_A"/>
+	<!-- データ長に合わせて5秒後に自動停止 -->
+	<framework sync="false" runtime="5"/>
+
+	<!-- ============= User A ============= -->
+	
+	<!-- Read User A Video -->
+	<sensor create="FileReader" path="data/user_a_video" loop="false">
+		<output channel="file" pin="video_A"/>
+	</sensor>
+
+	<!-- Read User A Audio -->
+	<sensor create="FileReader" path="data/user_a_audio" loop="false">
+		<output channel="file" pin="audio_A"/>
+	</sensor>
+
+	<!-- Read User A VAD -->
+	<sensor create="FileReader" path="data/user_a_vad" loop="false">
+		<output channel="file" pin="vad_A"/>
 	</sensor>
 
 	<!-- Convert User A Video to AVI -->
-	<consumer create="CameraWriter" path="data/output_video_A.avi">
+	<consumer create="AviWriter" path="data/output_video_A.avi" fps="25.0">
 		<input pin="video_A" frame="1"/>
 	</consumer>
 
@@ -25,20 +39,30 @@
 		<input pin="audio_A" frame="512"/>
 	</consumer>
 
-	<!-- Convert User A VAD to CSV (Text) -->
-	<consumer create="FileSampleWriter" path="data/output_vad_A.csv" format="1">
+	<!-- Convert User A VAD to CSV -->
+	<consumer create="FileWriter" path="data/output_vad_A" type="1">
 		<input pin="vad_A" frame="1"/>
 	</consumer>
 
-	<!-- Read the recorded raw data for User B -->
-	<sensor create="FileReader" path="data/record_user_b">
-		<output channel="video_B" pin="video_B"/>
-		<output channel="audio_B" pin="audio_B"/>
-		<output channel="vad_B" pin="vad_B"/>
+	<!-- ============= User B ============= -->
+
+	<!-- Read User B Video -->
+	<sensor create="FileReader" path="data/user_b_video" loop="false">
+		<output channel="file" pin="video_B"/>
+	</sensor>
+
+	<!-- Read User B Audio -->
+	<sensor create="FileReader" path="data/user_b_audio" loop="false">
+		<output channel="file" pin="audio_B"/>
+	</sensor>
+
+	<!-- Read User B VAD -->
+	<sensor create="FileReader" path="data/user_b_vad" loop="false">
+		<output channel="file" pin="vad_B"/>
 	</sensor>
 
 	<!-- Convert User B Video to AVI -->
-	<consumer create="CameraWriter" path="data/output_video_B.avi">
+	<consumer create="AviWriter" path="data/output_video_B.avi" fps="25.0">
 		<input pin="video_B" frame="1"/>
 	</consumer>
 
@@ -47,8 +71,8 @@
 		<input pin="audio_B" frame="512"/>
 	</consumer>
 
-	<!-- Convert User B VAD to CSV (Text) -->
-	<consumer create="FileSampleWriter" path="data/output_vad_B.csv" format="1">
+	<!-- Convert User B VAD to CSV -->
+	<consumer create="FileWriter" path="data/output_vad_B" type="1">
 		<input pin="vad_B" frame="1"/>
 	</consumer>
 

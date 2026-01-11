@@ -73,16 +73,27 @@
 	</consumer>
 
 	<!-- File Recording -->
-	<!-- Records synchronized data to files -->
-	<consumer create="FileWriter" path="data/record_user_a" overwrite="true">
+	<!-- Records synchronized data to separate files -->
+	
+	<!-- User A -->
+	<consumer create="FileWriter" path="data/user_a_video" overwrite="true">
 		<input pin="video_A" frame="1"/>
+	</consumer>
+	<consumer create="FileWriter" path="data/user_a_audio" overwrite="true">
 		<input pin="audio_A" frame="512"/>
+	</consumer>
+	<consumer create="FileWriter" path="data/user_a_vad" overwrite="true">
 		<input pin="vad_A" frame="1"/>
 	</consumer>
 	
-	<consumer create="FileWriter" path="data/record_user_b" overwrite="true">
+	<!-- User B -->
+	<consumer create="FileWriter" path="data/user_b_video" overwrite="true">
 		<input pin="video_B" frame="1"/>
+	</consumer>
+	<consumer create="FileWriter" path="data/user_b_audio" overwrite="true">
 		<input pin="audio_B" frame="512"/>
+	</consumer>
+	<consumer create="FileWriter" path="data/user_b_vad" overwrite="true">
 		<input pin="vad_B" frame="1"/>
 	</consumer>
 	

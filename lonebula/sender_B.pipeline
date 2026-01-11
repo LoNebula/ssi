@@ -10,7 +10,7 @@
 		<load name="ssigraphic" />
 		<load name="ssiaudio"/>
 		<load name="ssiioput"/>
-		<var name="config" value="config_sender_B.xml" />
+		<var name="config" value="config_sender.xml" />
 	</register>
 
 	<!-- Framework setup: Listen for sync if needed, or act as master -->
