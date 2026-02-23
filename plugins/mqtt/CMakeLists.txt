@@ -21,7 +21,7 @@ endif()
 #http://stackoverflow.com/questions/25609692/how-to-add-source-files-in-another-folder
 #file(GLOB Dir1_Sources RELATIVE "Dir1" "*.cpp")
 #http://www.opentissue.org/mediawiki/index.php/Using_CMake
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(ssimqtt)
 

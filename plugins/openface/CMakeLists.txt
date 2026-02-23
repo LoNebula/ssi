@@ -23,7 +23,7 @@ endif()
 #http://www.opentissue.org/mediawiki/index.php/Using_CMake
 #http://stackoverflow.com/questions/15175318/cmake-how-to-build-external-projects-and-include-their-targets
 #http://www.cmake.org/Wiki/CMake:Install_Commands
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(openssi-openface)
 

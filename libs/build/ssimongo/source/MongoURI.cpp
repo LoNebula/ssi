@@ -1,12 +1,12 @@
 // MongoURI.cpp
-// author: Johannes Wagner <wagner@hcm-lab.de>
+// author: Johannes Wagner <wagner@hcm-lab.de>, Tobias Hallmen
 // created: 2016/10/19
-// Copyright (C) University of Augsburg, Lab for Human Centered Multimedia
+// Copyright (C) 2007-26 University of Augsburg, Chair for Human-Centered Artificial Intelligence
 //
 // *************************************************************************************************
 //
 // This file is part of Social Signal Interpretation (SSI) developed at the 
-// Lab for Human Centered Multimedia of the University of Augsburg
+// Chair for Human-Centered Artificial Intelligence of the University of Augsburg
 //
 // This library is free software; you can redistribute itand/or
 // modify it under the terms of the GNU General Public
@@ -26,9 +26,33 @@
 #include "MongoURI.h"
 #include "base/String.h"
 
-#include <bson.h>
-#include <bcon.h>
-#include <mongoc.h>
+#include <mongoc/mongoc.h>
+#include <iomanip>
+#include <sstream>
+#include <cctype>
+
+static std::string url_encode(const std::string &value) {
+	std::ostringstream escaped;
+	escaped.fill('0');
+	escaped << std::hex;
+
+	for (std::string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+		std::string::value_type c = (*i);
+
+		// Keep alphanumeric and other safe characters
+		if (isalnum((unsigned char)c) || c == '-' || c == '_' || c == '.' || c == '~') {
+			escaped << c;
+			continue;
+		}
+
+		// Any other characters are percent-encoded
+		escaped << std::uppercase;
+		escaped << '%' << std::setw(2) << int((unsigned char)c);
+		escaped << std::nouppercase;
+	}
+
+	return escaped.str();
+}
 
 namespace ssi
 {
@@ -41,8 +65,11 @@ namespace ssi
 
 		_address = ssi_strcpy(address);
 
+		std::string encoded_user = url_encode(username ? username : "");
+		std::string encoded_pass = url_encode(password ? password : "");
+
 		ssi_char_t uri[SSI_MAX_CHAR];
-		ssi_sprint(uri, "mongodb://%s:%s@%s", username, password, address);
+		ssi_sprint(uri, "mongodb://%s:%s@%s", encoded_user.c_str(), encoded_pass.c_str(), address);
 
 		_uri = ssi_strcpy(uri);		
 	}

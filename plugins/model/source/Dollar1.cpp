@@ -147,6 +147,15 @@ bool Dollar$1::forward (ssi_stream_t &stream,
 	return true;
 }
 
+bool Dollar$1::forward(ssi_stream_t &stream,
+	ssi_size_t n_probs,
+	ssi_real_t *probs,
+	ssi_real_t &confidence,
+	ssi_video_params_t &params) {
+
+	return forward(stream, n_probs, probs, confidence);
+}
+
 bool Dollar$1::load (const ssi_char_t *filepath) {
 
 	File *file = File::CreateAndOpen (File::BINARY, File::READ, filepath);

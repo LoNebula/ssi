@@ -25,18 +25,23 @@
 
 #include "MongoDB.h"
 
-#include <bson.h>
-#include <bcon.h>
-#include <mongoc.h>
+#include <mongoc/mongoc.h>
 
 namespace ssi
 {
 	ssi_char_t *MongoDB::ssi_log_name = "mongodb___";
 
+	void log_handler(mongoc_log_level_t log_level, const char *log_domain, const char *message, void *user_data)
+	{
+		ssi_print("[MONGOC] %s: %s\n", log_domain, message);
+	}
+
 	MongoDB::MongoDB()
 	{
 		ssi_msg(SSI_LOG_LEVEL_BASIC, "init");
 		mongoc_init();
+		mongoc_log_set_handler(log_handler, NULL);
+		ssi_print("[MONGOC] Log handler set\n");
 	}
 
 	MongoDB::~MongoDB()

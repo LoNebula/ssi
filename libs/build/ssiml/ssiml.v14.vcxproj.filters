@@ -290,4 +290,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="ssiml.v18.vcxproj" />
+  </ItemGroup>
 </Project>

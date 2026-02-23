@@ -23,9 +23,19 @@ endif()
 #http://stackoverflow.com/questions/25609692/how-to-add-source-files-in-another-folder
 #file(GLOB Dir1_Sources RELATIVE "Dir1" "*.cpp")
 #http://www.opentissue.org/mediawiki/index.php/Using_CMake
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
+
+if(DEFINED ENV{VCPKG_ROOT})
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+elseif(EXISTS "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+    set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+endif()
 
 project(openssi)
+
+if(MSVC)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
 
 option(OPENSSI_BUILD_GUI "Build OpenSSI GUI (depends on SDL2)" OFF)
 

@@ -21,7 +21,7 @@ endif()
 #http://stackoverflow.com/questions/25609692/how-to-add-source-files-in-another-folder
 #file(GLOB Dir1_Sources RELATIVE "Dir1" "*.cpp")
 #http://www.opentissue.org/mediawiki/index.php/Using_CMake
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(ssimodel)
 
@@ -74,7 +74,6 @@ source/FrameFusion.cpp
 source/GeometricRecognizer.cpp
 source/GestureTemplate.cpp
 source/HierarchicalModel.cpp
-source/KMeans.cpp
 source/KNearestNeighbors.cpp
 source/KmTree.cpp
 source/KmUtils.cpp
@@ -142,7 +141,7 @@ add_library(ssimodel SHARED ${SRC_FILES} )
 IF(UNIX)
 target_link_libraries(ssimodel ssi ssiml AlgLib ${CAIRO_LIBRARIES} ${MINGW_WSOCKET} ${MINGW_WSOCKET2}  ${MINGW_WMM} ${MINGW_PTHREAD})
 ELSE(UNIX)
-target_link_libraries(ssimodel ssi ssiml AlgLib ${MINGW_WSOCKET} ${MINGW_WSOCKET2}  ${MINGW_WMM} ${MINGW_PTHREAD})
+target_link_libraries(ssimodel ssi ssiml ssicml AlgLib ${MINGW_WSOCKET} ${MINGW_WSOCKET2}  ${MINGW_WMM} ${MINGW_PTHREAD})
 ENDIF(UNIX)
 #add_executable(myapp main.c)
 

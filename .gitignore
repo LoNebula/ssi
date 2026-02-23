@@ -261,3 +261,37 @@ plugins/openface2/build/lib/local/LandmarkDetector/x64/Release/_IsIncrementalBui
 plugins/openface2/build/lib/local/Utilities/x64/Debug/_IsIncrementalBuild
 plugins/openface2/build/lib/local/Utilities/x64/Release/_IsIncrementalBuild
 *.err
+
+# Ignore CMake build artifacts
+build/
+bin_cmake/
+out/
+CMakeFiles/
+CMakeCache.txt
+vcpkg_installed/
+
+# Ignore Visual Studio
+.vs/
+*.vcxproj.user
+*.vcxproj.filters
+
+# Ignore Test Scripts
+test_mongo.py
+test_pymongo.py
+CLAUDE.md
+
+# Ignore generated plugin build files
+plugins/model/build/dlls/model.v14.vcxproj
+plugins/model/build/dlls/model.v18.vcxproj
+plugins/model/build/tools/cmltrain.v18.vcxproj
+plugins/model/build/tools/xmltrain.v18.vcxproj
+plugins/model/build/dlls/Release/
+plugins/model/build/libs/
+plugins/model/build/plugins/
+plugins/model/build/tools/Debug/
+plugins/model/build/tools/Release/
+plugins/model/build/model.v18.sln
+plugins/libs/
+plugins/model/build/Directory.Build.props
+plugins/model/build/Directory.Build.targets
+plugins/model/tools/cmlTrain/ld/tools/cmltrain_Main.cpp

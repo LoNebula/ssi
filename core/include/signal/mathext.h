@@ -206,6 +206,8 @@ SSI_INLINE unsigned long log10 (unsigned long x) {
 	return static_cast<unsigned long> (log10 (static_cast<float> (x)) + 0.5f);
 }
 
+// Avoid redefining system functions on MSVC which provides `log2` as an intrinsic
+#ifndef _MSC_VER
 SSI_INLINE char log2 (char x) {
 	static const float xxx = 1.0f/log(2.0f);
 	return static_cast<char> (log (static_cast<float> (x)) * xxx + 0.5f);
@@ -246,6 +248,7 @@ SSI_INLINE double log2 (double x) {
 	static const double xxx = 1.0/log(2.0);
 	return log (x)*xxx;
 }
+#endif
 
 SSI_INLINE char fabs (char x) {
 	return x < 0 ? -1 * x : x;

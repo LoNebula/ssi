@@ -8,7 +8,7 @@ The Social Signal Interpretation (SSI) framework offers tools to record, analyse
 
 # Getting ready
 
-People who are new to SSI may want to have a look at the [standalone tutorial](https://github.com/hcmlab/ssi-tutorial) first. Install intructions etc. can be found in the [official documentation](https://rawgit.com/hcmlab/ssi/master/docs/index.html). For all other information please visit [openssi.net](http://openssi.net/).
+People who are new to SSI may want to have a look at the [standalone tutorial](https://github.com/hcmlab/ssi-tutorial) first. Install intructions etc. can be found in the [official documentation](https://raw.githack.com/hcmlab/ssi/master/docs/index.html). For all other information please visit [openssi.net](http://openssi.net/).
 
 
 

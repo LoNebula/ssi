@@ -18,7 +18,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(openssi-model-tools)
 
@@ -46,8 +46,8 @@ add_dependencies(ssianno2sample ssimodel ssi )
 
 add_subdirectory(elan2ssiAnno)
 add_dependencies(elan2ssiAnno ssimodel ssi )
-#add_subdirectory(cmlTrain)
-#add_dependencies(ssicmltrain ssimodel mongo ssiopensmile ssi )
+add_subdirectory(cmlTrain)
+add_dependencies(ssicmltrain ssimodel ssimongo ssiopensmile ssi )
 
 endif(ANDROID)
 

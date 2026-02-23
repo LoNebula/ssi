@@ -26,9 +26,7 @@
 #include "MongoCollection.h"
 #include "BsonTools.h"
 
-#include <bson.h>
-#include <bcon.h>
-#include <mongoc.h>
+#include <mongoc/mongoc.h>
 
 namespace ssi
 {

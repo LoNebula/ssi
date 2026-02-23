@@ -33,6 +33,8 @@
 #include "signal/include/ssisignal.h"
 using namespace ssi;
 
+#include <conio.h>
+
 #ifdef USE_SSI_LEAK_DETECTOR
 #include "SSI_LeakWatcher.h"
 #ifdef _DEBUG
@@ -87,6 +89,8 @@ struct params_t
 	ssi_time_t sample_rate;
 	ssi_time_t duration;
 	bool invert;
+	bool tls;
+	bool verify;
 };
 
 struct DatabaseTrainSession
@@ -116,6 +120,7 @@ void forward(params_t &params);
 void merge(params_t &params);
 bool IsAudioFile(const ssi_char_t *path);
 bool IsVideoFile(const ssi_char_t *path);
+void testConnection(params_t &params);
 
 int main(int argc, char **argv) {
 #ifdef USE_SSI_LEAK_DETECTOR
@@ -171,7 +176,26 @@ int main(int argc, char **argv) {
 		params.scoreDim = 0;
 		params.confDim = -1;
 		params.invert = false;
+		params.confDim = -1;
+		params.invert = false;
+		params.tls = false;
+		params.verify = false;
 		params.multisessionspath = 0;
+
+		cmd.addMasterSwitch("--test");
+
+		cmd.addText("\nArguments:");
+		cmd.addSCmdArg("server", &params.server, "server name");
+		cmd.addICmdArg("port", &params.port, "port number");
+		cmd.addSCmdArg("database", &params.database, "name of database");
+
+		cmd.addText("\nOptions:");
+		cmd.addBCmdOption("-tls", &params.tls, false, "enable tls");
+		cmd.addBCmdOption("-verify", &params.verify, false, "enable strict certificate verification");
+		cmd.addSCmdOption("-username", &params.username, "", "database username");
+		cmd.addSCmdOption("-password", &params.password, "", "database password");
+		cmd.addSCmdOption("-url", &params.srcurl, default_source, "override default url for downloading missing dlls and dependencies");
+		cmd.addSCmdOption("-log", &params.logpath, "", "output to log file");
 
 		cmd.addMasterSwitch("--remove");
 
@@ -215,7 +239,6 @@ int main(int argc, char **argv) {
 		cmd.addSCmdOption("-url", &params.srcurl, default_source, "override default url for downloading missing dlls and dependencies");
 		cmd.addSCmdOption("-log", &params.logpath, "", "output to log file");
 
-		cmd.addMasterSwitch("--download");
 
 		cmd.addText("\nArguments:");
 		cmd.addSCmdArg("root", &params.root, "path to database on disk");
@@ -230,6 +253,8 @@ int main(int argc, char **argv) {
 		cmd.addSCmdOption("-filter", &params.filter, "*", "session filter (e.g. *location)");
 		cmd.addSCmdOption("-username", &params.username, "", "database username");
 		cmd.addSCmdOption("-password", &params.password, "", "database password");
+		cmd.addBCmdOption("-tls", &params.tls, false, "enable tls");
+		cmd.addBCmdOption("-verify", &params.verify, false, "enable strict certificate verification");
 		cmd.addSCmdOption("-url", &params.srcurl, default_source, "override default url for downloading missing dlls and dependencies");
 		cmd.addSCmdOption("-log", &params.logpath, "", "output to log file");
 
@@ -310,6 +335,8 @@ int main(int argc, char **argv) {
 		cmd.addSCmdOption("-list", &params.list, "", "list with sessions separated by ; (overrides filter)");
 		cmd.addSCmdOption("-username", &params.username, "", "database username");
 		cmd.addSCmdOption("-password", &params.password, "", "database password");
+		cmd.addBCmdOption("-tls", &params.tls, false, "enable tls");
+		cmd.addBCmdOption("-verify", &params.verify, false, "enable strict certificate verification");
 		cmd.addICmdOption("-left", &params.contextLeft, 0, "left context (number of frames added to the left of center frame)");
 		cmd.addICmdOption("-right", &params.contextRight, 0, "right context (number of frames added to the right of center frame)");
 		cmd.addSCmdOption("-balance", &params.balance, "none", "set sample balancing strategy (none,under,over)");
@@ -339,6 +366,8 @@ int main(int argc, char **argv) {
 		cmd.addSCmdOption("-list", &params.list, "", "list with sessions separated by ; (overrides filter)");
 		cmd.addSCmdOption("-username", &params.username, "", "database username");
 		cmd.addSCmdOption("-password", &params.password, "", "database password");;
+		cmd.addBCmdOption("-tls", &params.tls, false, "enable tls");
+		cmd.addBCmdOption("-verify", &params.verify, false, "enable strict certificate verification");
 		cmd.addSCmdOption("-balance", &params.balance, "none", "set sample balancing strategy (none,under,over)");
 		cmd.addBCmdOption("-cooperative", &params.cooperative, false, "turn on cooperative learning");
 		cmd.addSCmdOption("-dlls", &params.dlls, "", "list of requird dlls separated by ';' [deprecated, use register tag in trainer]");
@@ -364,6 +393,8 @@ int main(int argc, char **argv) {
 		cmd.addSCmdOption("-list", &params.list, "", "list with sessions separated by ; (overrides filter)");
 		cmd.addSCmdOption("-username", &params.username, "", "database username");
 		cmd.addSCmdOption("-password", &params.password, "", "database password");
+		cmd.addBCmdOption("-tls", &params.tls, false, "enable tls");
+		cmd.addBCmdOption("-verify", &params.verify, false, "enable strict certificate verification");
 		cmd.addBCmdOption("-finished", &params.finished, false, "annotation will be marked as finished");
 		cmd.addBCmdOption("-locked", &params.locked, false, "annotation will be marked as locked");
 		cmd.addICmdOption("-left", &params.contextLeft, 0, "left context (number of frames added to the left of center frame)");
@@ -686,7 +717,7 @@ bool readCredentials(params_t &params)
 	if (params.username[0] == '\0')
 	{
 		printf("username: ");
-		while ((c = getch()) != '\r') {
+        while ((c = _getch()) != '\r') {
 			username[i++] = c;
 			printf("%c", c);
 		}
@@ -698,7 +729,7 @@ bool readCredentials(params_t &params)
 	{
 		printf("\npassword: ");
 		i = 0;
-		while ((c = getch()) != '\r') {
+        while ((c = _getch()) != '\r') {
 			password[i++] = c;
 			printf("*");
 		}
@@ -736,7 +767,7 @@ void uploadAnnotations(params_t &params)
 {
 	MongoURI uri(params.server, params.port, params.username, params.password);
 	MongoClient client;
-	if (!client.connect(uri, params.database, false, 1000))
+	if (!client.connect(uri, params.database, false, 1000, params.tls, params.verify))
 	{
 		return;
 	}
@@ -793,7 +824,7 @@ void removeAnnotations(params_t &params)
 {
 	MongoURI uri(params.server, params.port, params.username, params.password);
 	MongoClient client;
-	if (!client.connect(uri, params.database, false, 1000))
+	if (!client.connect(uri, params.database, false, 1000, params.tls, params.verify))
 	{
 		return;
 	}
@@ -819,7 +850,7 @@ void downloadAnnotations(params_t &params)
 {
 	MongoURI uri(params.server, params.port, params.username, params.password);
 	MongoClient client;
-	if (!client.connect(uri, params.database, false, 1000))
+	if (!client.connect(uri, params.database, false, 1000, params.tls, params.verify))
 	{
 		return;
 	}
@@ -1231,7 +1262,7 @@ void train_multi_corpora(params_t &params)
 	//Connect one time to initalize cmltrainer and the scheme.
 	MongoURI uri(params.server, params.port, params.username, params.password);
 	MongoClient client;
-	if (!client.connect(uri, corpora[0].database, false, 1000))
+	if (!client.connect(uri, corpora[0].database, false, 1000, params.tls, params.verify))
 	{
 		return;
 	}
@@ -1244,7 +1275,7 @@ void train_multi_corpora(params_t &params)
 		for (int i = 0; i < corpora.size(); i++)
 		{
 			MongoClient localclient;
-			if (!localclient.connect(uri, corpora[i].database, false, 1000))
+			if (!localclient.connect(uri, corpora[i].database, false, 1000, params.tls, params.verify))
 			{
 				return;
 			}
@@ -1288,7 +1319,7 @@ void train(params_t &params)
 {
 	MongoURI uri(params.server, params.port, params.username, params.password);
 	MongoClient client;
-	if (!client.connect(uri, params.database, false, 1000))
+	if (!client.connect(uri, params.database, false, 1000, params.tls, params.verify))
 	{
 		return;
 	}
@@ -1393,7 +1424,7 @@ void eval(params_t &params)
 {
 	MongoURI uri(params.server, params.port, params.username, params.password);
 	MongoClient client;
-	if (!client.connect(uri, params.database, false, 1000))
+	if (!client.connect(uri, params.database, false, 1000, params.tls, params.verify))
 	{
 		return;
 	}
@@ -1495,18 +1526,18 @@ bool forward_h(params_t &params, MongoClient &client, Trainer &trainer, CMLTrain
 		return true;
 	}
 
-	catch (Exception e) {
-		ssi_print("%s", e);
-		getchar();
-		return false;
-	}
+    catch (const Exception &e) {
+        ssi_print("%s", e.what());
+        getchar();
+        return false;
+    }
 }
 
 void forward(params_t &params)
 {
 	MongoURI uri(params.server, params.port, params.username, params.password);
 	MongoClient client;
-	if (!client.connect(uri, params.database, false, 1000))
+	if (!client.connect(uri, params.database, false, 1000, params.tls, params.verify))
 	{
 		return;
 	}

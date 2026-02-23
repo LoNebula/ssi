@@ -27,8 +27,6 @@
 #include "ioput/file/FileProvider.h"
 #include "base/Factory.h"
 
-namespace ssi {
-
 #ifdef USE_SSI_LEAK_DETECTOR
 	#include "SSI_LeakWatcher.h"
 	#ifdef _DEBUG
@@ -37,6 +35,8 @@ namespace ssi {
 		static char THIS_FILE[] = __FILE__;
 	#endif
 #endif
+
+namespace ssi {
 
 FileProvider::FileProvider (IConsumer *writer,
 	ITransformer *transformer)

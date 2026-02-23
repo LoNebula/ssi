@@ -95,4 +95,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="alglib.v18.vcxproj" />
+  </ItemGroup>
 </Project>

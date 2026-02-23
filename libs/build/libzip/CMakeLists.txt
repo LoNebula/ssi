@@ -4,7 +4,7 @@
 # 3. Problems generating html pages.
 # 4. create usable libtool .la file
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
+cmake_minimum_required(VERSION 3.10)
 
 PROJECT(libzip C)
 

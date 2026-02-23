@@ -1,4 +1,5 @@
 #-----------------------------------------------------------------------------
+add_definitions(-DCURL_STATICLIB)
 # Initialize project.
 
 if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
@@ -18,7 +19,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(ssi)
 
@@ -33,7 +34,7 @@ IF(SSI_GUI STREQUAL "SDL")
 	endif(UNIX)
 endif(SSI_GUI STREQUAL "SDL")
 
-include_directories(include include/ioput/socket include/ioput ../libs/build/ ../plugins/ ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
+include_directories(include build/libs include/ioput/socket include/ioput ../libs/build/ ../plugins/ ../libs/build/curl/curl-7.21.6/include ${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
 
 set(COMMON_SRC_FILES
 
@@ -125,6 +126,7 @@ source/base/Factory.cpp
 
 source/ioput/socket/SocketUdp.cpp
 source/graphic/Console.cpp
+source/web/WebTools.cpp
 
 
 )
@@ -141,9 +143,14 @@ source/graphic/Console.cpp
         source/graphic/SDL_Monitor.cpp
 	)
 else((SSI_GUI STREQUAL "SDL") AND UNIX)
+if (WIN32)
+set(GUI_SRC_FILES
+    )
+else(WIN32)
 set(GUI_SRC_FILES
     source/graphic/WindowFallback.cpp
     )
+endif(WIN32)
 endif((SSI_GUI STREQUAL "SDL") AND UNIX)
 
 if(ANDROID)
@@ -172,8 +179,17 @@ endif(ANDROID)
 	source/graphic/Colormap.cpp
 	source/graphic/GraphicTools.cpp
 	source/graphic/Painter.cpp
+	source/graphic/SystemTray.cpp
+	source/graphic/BabyGrid.cpp
+	source/graphic/Button.cpp
+	source/graphic/CheckBox.cpp
+	source/graphic/ComboBox.cpp
+	source/graphic/Grid.cpp
+	source/graphic/Tab.cpp
+	source/graphic/TextBox.cpp
 
 	source/ioput/pipe/NamedPipe.cpp
+	build/libs/ssi.rc
 	)
  ELSE(WIN32)
  set(P_SRC_FILES
@@ -228,7 +244,7 @@ IF(UNIX)
 	endif(SSI_GUI STREQUAL "SDL")
 
 ELSE(UNIX)
-target_link_libraries(ssi ${MINGW_PTHREAD})
+target_link_libraries(ssi ${MINGW_PTHREAD} libcurl)
 ENDIF(UNIX)
 #rename targets if debug
 if(ANDROID)
