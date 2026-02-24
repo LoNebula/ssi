@@ -93,7 +93,7 @@ ENDIF(MINGW)
 set(SRC_FILES ${COMMON_SRC_FILES} )
 
 
-add_executable(xmlpipe ${SRC_FILES})
+add_executable(xmlpipe ${SRC_FILES} ../../build/tools/xmlpipe/xmlpipe.rc)
 if(UNIX)
 target_link_libraries(xmlpipe ssi ${MINGW_WSOCKET} ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} ${X11} ${Xi} ${CAIRO_LIBRARIES} ${SDL2_LIBRARIES})
 else(UNIX)

@@ -1,12 +1,12 @@
 // MongoClient.cpp
-// author: Johannes Wagner <wagner@hcm-lab.de>, Tobias Hallmen
+// author: Johannes Wagner <wagner@hcm-lab.de>, Tobias Hallmen <tobias.hallmen@uni-a.de
 // created: 2016/10/19
-// Copyright (C) 2007-26 University of Augsburg, Lab for Human Centered Multimedia
+// Copyright (C) 2007-26 University of Augsburg, Chair for Human-Centered Artificial Intelligence
 //
 // *************************************************************************************************
 //
 // This file is part of Social Signal Interpretation (SSI) developed at the 
-// Lab for Human Centered Multimedia of the University of Augsburg
+// Chair for Human-Centered Artificial Intelligence of the University of Augsburg
 //
 // This library is free software; you can redistribute itand/or
 // modify it under the terms of the GNU General Public
@@ -89,22 +89,27 @@ namespace ssi
 		ssi_msg(SSI_LOG_LEVEL_BASIC, "connect (name='%s', timeout=%u, tls=%s, verify=%s)", _name, timeout, tls ? "true" : "false", verify ? "true" : "false");
 
 		ssi_char_t tmp[SSI_MAX_CHAR];
+		ssi_char_t masked_tmp[SSI_MAX_CHAR];
 		ssi_size_t timeout_val = (timeout > 0) ? timeout : 10000;
 		sprintf(tmp, "%s/%s?connectTimeoutMS=%u&socketTimeoutMS=%u&serverSelectionTimeoutMS=%u", uri.getURI(), db_name, timeout_val, timeout_val, timeout_val);
+		sprintf(masked_tmp, "%s/%s?connectTimeoutMS=%u&socketTimeoutMS=%u&serverSelectionTimeoutMS=%u", uri.getMaskedURI(), db_name, timeout_val, timeout_val, timeout_val);
 
 		if (tls) {
 			strcat(tmp, "&tls=true");
+			strcat(masked_tmp, "&tls=true");
 			if (!verify) {
 				strcat(tmp, "&tlsInsecure=true");
+				strcat(masked_tmp, "&tlsInsecure=true");
 			}
 		}
 
 		strcat(tmp, "&authSource=admin");
+		strcat(masked_tmp, "&authSource=admin");
 
 		// strcat(tmp, "&directConnection=true");
 		// strcat(tmp, "&authSource=admin");
 
-		ssi_print("\n[mongoclnt_] uri='%s'\n", tmp);
+		ssi_print("\n[mongoclnt_] uri='%s'\n", masked_tmp);
 
 		_uri = mongoc_uri_new(tmp);
 			

@@ -278,6 +278,7 @@ vcpkg_installed/
 # Ignore Test Scripts
 test_mongo.py
 test_pymongo.py
+test_cml.cs
 CLAUDE.md
 
 # Ignore generated plugin build files

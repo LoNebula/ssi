@@ -94,7 +94,7 @@ ENDIF(MINGW)
 set(SRC_FILES ${COMMON_SRC_FILES} )
 
 
-add_executable(xmlchain ${SRC_FILES})
+add_executable(xmlchain ${SRC_FILES} ../../build/tools/xmlchain/xmlchain.rc)
 if(UNIX)
 target_link_libraries(xmlchain ssi ssiml ${MINGW_WSOCKET} ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} ${X11} ${Xi} ${CAIRO_LIBRARIES} ${SDL2_LIBRARIES})
 else(UNIX)

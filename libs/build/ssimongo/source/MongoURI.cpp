@@ -72,17 +72,27 @@ namespace ssi
 		ssi_sprint(uri, "mongodb://%s:%s@%s", encoded_user.c_str(), encoded_pass.c_str(), address);
 
 		_uri = ssi_strcpy(uri);		
+
+		ssi_char_t masked_uri[SSI_MAX_CHAR];
+		ssi_sprint(masked_uri, "mongodb://%s:***@%s", encoded_user.c_str(), address);
+		_masked_uri = ssi_strcpy(masked_uri);
 	}
 	
 	MongoURI::~MongoURI()
 	{
 		delete[] _address; _address = 0;
 		delete[] _uri; _uri = 0;
+		delete[] _masked_uri; _masked_uri = 0;
 	}
 
 	const ssi_char_t *MongoURI::getURI()
 	{
 		return _uri;
+	}
+
+	const ssi_char_t *MongoURI::getMaskedURI()
+	{
+		return _masked_uri;
 	}
 
 	const ssi_char_t *MongoURI::getAddress()

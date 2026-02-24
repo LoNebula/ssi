@@ -33,7 +33,9 @@ set(SRC_FILES
 # For now, I will create the CMakeLists.txt and assume source is 'cmltrain_Main.cpp' in the same folder.
 # I will need to write the content of the modified cmltrain_Main.cpp to this new location.
 
-add_executable(ssicmltrain cmltrain_Main.cpp)
+add_executable(ssicmltrain cmltrain_Main.cpp ../../build/tools/cmltrain.rc)
+
+set_target_properties(ssicmltrain PROPERTIES OUTPUT_NAME "cmltrain")
 
 target_link_libraries(ssicmltrain 
     ssimodel 
