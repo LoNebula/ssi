@@ -41,6 +41,7 @@ include_directories (
 	../../../core/include/ioput
 	
 	../../../plugins/
+	../../build/tools/xmlpipe
 	${CAIRO_INCLUDE_DIRS}
 	${SDL2_INCLUDE_DIRS}
 )

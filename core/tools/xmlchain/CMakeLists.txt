@@ -42,6 +42,7 @@ include_directories (
         ../../../libs/build/
 	
 	../../../plugins/
+	../../build/tools/xmlchain
 	${CAIRO_INCLUDE_DIRS}
 	${SDL2_INCLUDE_DIRS}
 )

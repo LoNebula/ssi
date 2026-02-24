@@ -65,6 +65,7 @@ set(SRC_FILES ${COMMON_SRC_FILES} )
 
 
 add_executable(ssianno2sample ${SRC_FILES})
+set_target_properties(ssianno2sample PROPERTIES OUTPUT_NAME "anno2samp")
 if(UNIX)
 target_link_libraries(ssianno2sample ssi ssiml AlgLib ${X11} ${Xi} ${CAIRO_LIBRARIES} ${SDL2_LIBRARIES} ${PORTAUDIO_LIBRARIES} )
 else(UNIX)

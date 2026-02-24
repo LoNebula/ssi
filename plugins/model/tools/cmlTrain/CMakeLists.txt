@@ -8,6 +8,7 @@ include_directories(
     ../../../../libs/build/ssimongo/include
     ../../../../libs/build/ssimongo/mongoc/include
     ../../../../libs/build/ssimongo/libbson/include
+    ../../build/tools
 )
 
 # Locate the source file. It seems it might be in this directory or misplaced in build directory previously.
