@@ -21,7 +21,7 @@ endif()
 #http://stackoverflow.com/questions/25609692/how-to-add-source-files-in-another-folder
 #file(GLOB Dir1_Sources RELATIVE "Dir1" "*.cpp")
 #http://www.opentissue.org/mediawiki/index.php/Using_CMake
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(ssiopensmile)
 
@@ -45,6 +45,7 @@ include_directories(
 			../../core/include/ioput
 			../../core/include
 			../../core/include/frame
+			../../libs/build/curl/curl-7.21.6/include
 			../
                         ../../libs/build/opencv/include/
 			${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS}
@@ -138,7 +139,8 @@ add_library(ssiopensmile SHARED ${SRC_FILES} )
 IF(UNIX)
 target_link_libraries(ssiopensmile ssi ${MINGW_WSOCKET} ${MINGW_WMM} ${MINGW_WSOCKET2} ${MINGW_PTHREAD} -ldl)
 ELSE(UNIX)
-target_link_libraries(ssiopensmile ssi ${MINGW_WSOCKET} ${MINGW_WSOCKET2}  ${MINGW_WMM} ${MINGW_PTHREAD})
+target_link_libraries(ssiopensmile ssi libcurl ${MINGW_WSOCKET} ${MINGW_WSOCKET2}  ${MINGW_WMM} ${MINGW_PTHREAD})
+add_definitions(-DCURL_STATICLIB)
 ENDIF(UNIX)
 #add_executable(myapp main.c)
 

@@ -18,7 +18,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(xmlchain)
 
@@ -42,6 +42,7 @@ include_directories (
         ../../../libs/build/
 	
 	../../../plugins/
+	../../build/tools/xmlchain
 	${CAIRO_INCLUDE_DIRS}
 	${SDL2_INCLUDE_DIRS}
 )
@@ -94,7 +95,7 @@ ENDIF(MINGW)
 set(SRC_FILES ${COMMON_SRC_FILES} )
 
 
-add_executable(xmlchain ${SRC_FILES})
+add_executable(xmlchain ${SRC_FILES} ../../build/tools/xmlchain/xmlchain.rc)
 if(UNIX)
 target_link_libraries(xmlchain ssi ssiml ${MINGW_WSOCKET} ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} ${X11} ${Xi} ${CAIRO_LIBRARIES} ${SDL2_LIBRARIES})
 else(UNIX)

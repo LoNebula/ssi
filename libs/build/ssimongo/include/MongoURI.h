@@ -44,6 +44,7 @@ namespace ssi
 		
 		const ssi_char_t *getAddress();
 		const ssi_char_t *getURI();
+		const ssi_char_t *getMaskedURI();
 
 	protected:
 
@@ -51,6 +52,7 @@ namespace ssi
 
 		ssi_char_t *_address;
 		ssi_char_t *_uri;
+		ssi_char_t *_masked_uri;
 	};
 
 }

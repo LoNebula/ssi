@@ -31,9 +31,7 @@
 
 #include "SSI_Cons.h"
 
-#include <bson.h>
-#include <bcon.h>
-#include <mongoc.h>
+#include <mongoc/mongoc.h>
 
 namespace ssi {
 

@@ -18,7 +18,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(ssianno2sample)
 
@@ -65,6 +65,7 @@ set(SRC_FILES ${COMMON_SRC_FILES} )
 
 
 add_executable(ssianno2sample ${SRC_FILES})
+set_target_properties(ssianno2sample PROPERTIES OUTPUT_NAME "anno2samp")
 if(UNIX)
 target_link_libraries(ssianno2sample ssi ssiml AlgLib ${X11} ${Xi} ${CAIRO_LIBRARIES} ${SDL2_LIBRARIES} ${PORTAUDIO_LIBRARIES} )
 else(UNIX)

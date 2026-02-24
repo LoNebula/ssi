@@ -18,7 +18,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(ssixmltrain)
 
@@ -38,8 +38,8 @@ include_directories (
 	include
 	../../../core/include
 	
-	../../../plugins/
 	../include
+	../../build/tools
 	${CAIRO_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS}
         ${PORTAUDIO_INCLUDE_DIRS}
 	
@@ -64,7 +64,8 @@ ENDIF(MINGW)
 set(SRC_FILES ${COMMON_SRC_FILES} )
 
 
-add_executable(ssixmltrain ${SRC_FILES})
+add_executable(ssixmltrain ${SRC_FILES} ../../build/tools/xmltrain.rc)
+set_target_properties(ssixmltrain PROPERTIES OUTPUT_NAME "xmltrain")
 if(UNIX)
 target_link_libraries(ssixmltrain ssiml AlgLib ssi ${X11} ${Xi} ${CAIRO_LIBRARIES} ${SDL2_LIBRARIES} ${PORTAUDIO_LIBRARIES} )
 else(UNIX)

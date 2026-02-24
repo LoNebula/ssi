@@ -18,7 +18,7 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 	endif()
 endif()
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(xmlpipe)
 
@@ -41,6 +41,7 @@ include_directories (
 	../../../core/include/ioput
 	
 	../../../plugins/
+	../../build/tools/xmlpipe
 	${CAIRO_INCLUDE_DIRS}
 	${SDL2_INCLUDE_DIRS}
 )
@@ -93,7 +94,7 @@ ENDIF(MINGW)
 set(SRC_FILES ${COMMON_SRC_FILES} )
 
 
-add_executable(xmlpipe ${SRC_FILES})
+add_executable(xmlpipe ${SRC_FILES} ../../build/tools/xmlpipe/xmlpipe.rc)
 if(UNIX)
 target_link_libraries(xmlpipe ssi ${MINGW_WSOCKET} ${MINGW_WSOCKET2} ${MINGW_WMM} ${MINGW_PTHREAD} ${X11} ${Xi} ${CAIRO_LIBRARIES} ${SDL2_LIBRARIES})
 else(UNIX)

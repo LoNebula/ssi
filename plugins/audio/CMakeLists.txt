@@ -23,7 +23,7 @@ endif()
 #http://www.opentissue.org/mediawiki/index.php/Using_CMake
 #http://stackoverflow.com/questions/15175318/cmake-how-to-build-external-projects-and-include-their-targets
 #http://www.cmake.org/Wiki/CMake:Install_Commands
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(openssi-audio)
 
@@ -90,8 +90,8 @@ source/VolumeOutWave.cpp
 endif(MINGW OR UNIX)
 
 
- IF(WIN32)
- set(P_SRC_FILES
+	IF(WIN32)
+	set(P_SRC_FILES
 source/Audio.cpp
 source/AudioPlayer.cpp
 source/AudioNoiseGate.cpp
@@ -100,7 +100,8 @@ source/AudioCons.cpp
 source/AudioIn.cpp
 source/AudioMixer.cpp
 source/AudioOut.cpp
-
+source/AudioLoopBack.cpp
+source/AudioLoopBackHelper.cpp
 	)
  ELSEIF(ANDROID)
  set(P_SRC_FILES

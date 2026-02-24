@@ -6,7 +6,7 @@
 # setting this makes CMake allow normal looking if else statements
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 3.10)
 
 # Suppress cmake warnings about changes in new versions.
 if(COMMAND cmake_policy) 

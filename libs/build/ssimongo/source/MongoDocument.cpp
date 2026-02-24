@@ -28,9 +28,7 @@
 #include "MongoOID.h"
 #include "MongoDate.h"
 
-#include <bson.h>
-#include <bcon.h>
-#include <mongoc.h>
+#include <mongoc/mongoc.h>
 
 namespace ssi
 {

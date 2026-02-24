@@ -48,7 +48,7 @@ namespace ssi
 		MongoClient();
 		virtual ~MongoClient();
 
-		bool connect(MongoURI &uri, const ssi_char_t *db_name, bool auto_create = false, ssi_size_t timeout_ms = 1000);		
+		bool connect(MongoURI &uri, const ssi_char_t *db_name, bool auto_create = false, ssi_size_t timeout_ms = 1000, bool tls = false, bool verify = false);		
 		bool check();
 		bool is_connected();		
 		const ssi_char_t *getName();

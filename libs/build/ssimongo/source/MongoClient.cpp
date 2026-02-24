@@ -1,12 +1,12 @@
 // MongoClient.cpp
-// author: Johannes Wagner <wagner@hcm-lab.de>
+// author: Johannes Wagner <wagner@hcm-lab.de>, Tobias Hallmen <tobias.hallmen@uni-a.de
 // created: 2016/10/19
-// Copyright (C) University of Augsburg, Lab for Human Centered Multimedia
+// Copyright (C) 2007-26 University of Augsburg, Chair for Human-Centered Artificial Intelligence
 //
 // *************************************************************************************************
 //
 // This file is part of Social Signal Interpretation (SSI) developed at the 
-// Lab for Human Centered Multimedia of the University of Augsburg
+// Chair for Human-Centered Artificial Intelligence of the University of Augsburg
 //
 // This library is free software; you can redistribute itand/or
 // modify it under the terms of the GNU General Public
@@ -27,9 +27,7 @@
 #include "MongoDB.h"
 #include "MongoURI.h"
 
-#include <bson.h>
-#include <bcon.h>
-#include <mongoc.h>
+#include <mongoc/mongoc.h>
 
 namespace ssi
 {
@@ -61,10 +59,13 @@ namespace ssi
 		bson_t reply;
 		bson_error_t error;
 
-		bool result = mongoc_client_get_server_status(_client, prefs, &reply, &error);
+		bson_t *cmd = BCON_NEW("ping", BCON_INT32(1));
+		bool result = mongoc_client_command_simple(_client, "admin", cmd, NULL, &reply, &error);
+		bson_destroy(cmd);
+		
 		if (!result)
 		{
-			ssi_wrn("check failed '%s'", error.message);
+			ssi_wrn("check failed '%s' (domain=%u, code=%u)", error.message, error.domain, error.code);
 		}
 		
 		mongoc_read_prefs_destroy(prefs);
@@ -72,7 +73,7 @@ namespace ssi
 		return result;
 	}
 
-	bool MongoClient::connect(MongoURI &uri, const ssi_char_t *db_name, bool auto_create, ssi_size_t timeout)
+	bool MongoClient::connect(MongoURI &uri, const ssi_char_t *db_name, bool auto_create, ssi_size_t timeout, bool tls, bool verify)
 	{
 		bson_error_t error;
 
@@ -85,18 +86,32 @@ namespace ssi
 		_name = ssi_strcat(db_name, "@", uri.getAddress());
 		_db_name = ssi_strcpy(db_name);
 
-		ssi_msg(SSI_LOG_LEVEL_BASIC, "connect (name='%s', timeout=%u)", _name, timeout);
+		ssi_msg(SSI_LOG_LEVEL_BASIC, "connect (name='%s', timeout=%u, tls=%s, verify=%s)", _name, timeout, tls ? "true" : "false", verify ? "true" : "false");
 
-		if (timeout > 0)
-		{
-			ssi_char_t tmp[SSI_MAX_CHAR];
-			ssi_sprint(tmp, "%s/?connectTimeoutMS=%u", uri.getURI(), timeout);
-			_uri = mongoc_uri_new(tmp);
+		ssi_char_t tmp[SSI_MAX_CHAR];
+		ssi_char_t masked_tmp[SSI_MAX_CHAR];
+		ssi_size_t timeout_val = (timeout > 0) ? timeout : 10000;
+		sprintf(tmp, "%s/%s?connectTimeoutMS=%u&socketTimeoutMS=%u&serverSelectionTimeoutMS=%u", uri.getURI(), db_name, timeout_val, timeout_val, timeout_val);
+		sprintf(masked_tmp, "%s/%s?connectTimeoutMS=%u&socketTimeoutMS=%u&serverSelectionTimeoutMS=%u", uri.getMaskedURI(), db_name, timeout_val, timeout_val, timeout_val);
+
+		if (tls) {
+			strcat(tmp, "&tls=true");
+			strcat(masked_tmp, "&tls=true");
+			if (!verify) {
+				strcat(tmp, "&tlsInsecure=true");
+				strcat(masked_tmp, "&tlsInsecure=true");
+			}
 		}
-		else
-		{
-			_uri = mongoc_uri_new(uri.getAddress());
-		}
+
+		strcat(tmp, "&authSource=admin");
+		strcat(masked_tmp, "&authSource=admin");
+
+		// strcat(tmp, "&directConnection=true");
+		// strcat(tmp, "&authSource=admin");
+
+		ssi_print("\n[mongoclnt_] uri='%s'\n", masked_tmp);
+
+		_uri = mongoc_uri_new(tmp);
 			
 		if (!_uri)
 		{
@@ -110,32 +125,7 @@ namespace ssi
 			return false;
 		}
 
-		// if (!auto_create)
-		// {
-		// 	char **dbs = mongoc_client_get_database_names(_client, &error);
-		// 	if (dbs)
-		// 	{
-		// 		bool found = false;
-		// 		for (ssi_size_t i = 0; dbs[i]; i++)
-		// 		{
-		// 			if (ssi_strcmp(dbs[i], db_name))
-		// 			{
-		// 				found = true;
-		// 				break;
-		// 			}
-		// 		}
-		// 		bson_strfreev(dbs);
-		// 		if (!found)
-		// 		{
-		// 			ssi_wrn("database not found '%s'", _db_name);
-		// 			return false;
-		// 		}
-		// 	}
-		// 	else {
-		// 		ssi_wrn("could not get database names '%s'", error.message);
-		// 		return false;
-		// 	}
-		// }
+		mongoc_client_set_error_api(_client, MONGOC_ERROR_API_VERSION_2);
 
 		_db = mongoc_client_get_database(_client, _db_name);
 		if (!_db)
@@ -144,12 +134,17 @@ namespace ssi
 			return false;
 		}
 
-		//if (!check())
-		//{
-		//	ssi_wrn("could not connect '%s'", _address);
-		//	close();
-		//	return false;
-		//}
+		ssi_print("[mongoclnt_] starting check...\n");
+		long long t0 = GetTickCount64();
+		if (!check())
+		{
+			long long t1 = GetTickCount64();
+			ssi_print("[mongoclnt_] check finished in %lld ms\n", t1 - t0);
+			ssi_wrn("could not connect '%s'", _name);
+			close();
+			return false;
+		}
+		ssi_print("[mongoclnt_] check success in %lld ms\n", GetTickCount64() - t0);
 
 		return true;
 	}

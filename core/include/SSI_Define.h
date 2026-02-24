@@ -1,7 +1,7 @@
 // SSI_Define.h
 // author: Johannes Wagner <wagner@hcm-lab.de>
 // created: 2016/02/18
-// Copyright (C) University of Augsburg, Lab for Human Centered Multimedia
+// Copyright (C) 2007-26 University of Augsburg, Chair for Human-Centered Artificial Intelligence
 //
 // *************************************************************************************************
 //
@@ -35,12 +35,12 @@
 #define SSI_INLINE inline
 
 // version (major.minor.maintenance)
-#define SSI_VERSION "v1.0.5"
+#define SSI_VERSION "v1.0.6"
 
 // copyright
 #define SSI_COPYRIGHT "Built with Social Signal Interpretation (SSI)\n\n\
-(c) 2007-22 University of Augsburg, Germany. Lab for Human-Centered Artificial Intelligence\n\
-Johannes Wagner, Tobias Baur, Florian Lingenfelser, Andreas Seiderer, Simon Flutura, Dominik Schiller, Ionut Damian\n\n\
+(c) 2007-26 University of Augsburg, Germany. Chair for Human-Centered Artificial Intelligence\n\
+Johannes Wagner, Tobias Baur, Florian Lingenfelser, Andreas Seiderer, Simon Flutura, Dominik Schiller, Ionut Damian, Tobias Hallmen\n\n\
 website: http://openssi.net\n\
 contact: support@openssi.net"
 
