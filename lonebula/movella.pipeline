@@ -4,14 +4,14 @@
     <register>
         <load name="ssipython310" />
         <load name="ssigraphic" />
-        <load name="ssiioput" /> 
-	</register>
+        <load name="ssiioput" />
+    </register>
 
     <sensor create="PythonSensor" script="movella" syspath="." block="0.1">
         <output channel="sensor" pin="euler" />
     </sensor>
 
-    <consumer create="FileWriter" path="my_data" type="csv">
+    <consumer create="FileWriter" path="my_data" type="1">
         <input pin="euler" frame="0.1s" />
     </consumer>
 
