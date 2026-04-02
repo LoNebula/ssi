@@ -1,26 +1,22 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 <pipeline ssi-v="1">
 
     <register>
-        <load dll="ssipython"/>
-        <load dll="ssigraphic"/>
-        <load dll="ssifile"/>
+        <load name="ssipython310" />
+        <load name="ssigraphic" />
     </register>
 
-    <sensor create="PythonSensor" script="gopro" class="GoProSensor" sr="10.0">
-        <output channel="status" pin="gopro_stream"/>
+    <sensor create="PythonSensor" script="gopro" block="0.1">
+        <output channel="gopro" pin="gopro_data" />
     </sensor>
 
-    <consumer create="SignalPainter" title="GoPro Realtime Stream" window="10.0">
-        <input pin="gopro_stream" frame="1"/>
+    <consumer create="SignalPainter" title="GoPro 3-ch Acceleration" size="10.0">
+        <input pin="gopro_data" frame="0.1s" />
     </consumer>
 
-    <consumer create="FileWriter" path="gopro_data" sync="true">
-        <input pin="gopro_stream" frame="1"/>
-    </consumer>
-
-    <decoration>
-        <gui iobs="true"/>
-    </decoration>
+    <object create="Decorator" icon="true" title="GoPro Pipeline">
+        <area pos="0,0,400,600">console</area>
+        <area pos="400,0,800,600">plot*</area>
+    </object>
 
 </pipeline>

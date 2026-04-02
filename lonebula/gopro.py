@@ -1,55 +1,81 @@
 import threading
 import asyncio
 import queue
+import time
 import numpy as np
 from open_gopro import WirelessGoPro
 
-class GoProSensor:
-    def __init__(self, **kwargs):
-        # SSIからの設定引数
-        self.sr = float(kwargs.get('sr', 10.0))  # サンプリングレート
-        self.data_queue = queue.Queue()
-        self.stop_event = threading.Event()
-        self.thread = None
-        self.gopro = None
+# --------------------------------------------------
+# グローバル変数 (SSIの各関数間で共有)
+# --------------------------------------------------
+_data_queue = queue.Queue()
+_stop_event = threading.Event()
 
-    def connect(self):
-        """SSI起動時に呼ばれる初期化処理"""
-        self.thread = threading.Thread(target=self._run_gopro_loop, daemon=True)
-        self.thread.start()
+def getOptions(opts, vars):
+    pass
 
-    def _run_gopro_loop(self):
-        """別スレッドでGoProの非同期通信を回す"""
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self._gopro_async_task())
+def getChannelNames(opts, vars):
+    # Movellaの例に倣い、チャンネル名と説明を定義
+    return { 'gopro' : 'GoPro Sensor Data (Dummy Accel X, Y, Z)' }
 
-    async def _gopro_async_task(self):
-        async with WirelessGoPro() as gopro:
-            self.gopro = gopro
-            # 接続確認
-            print("Successfully connected to GoPro!")
-            
-            while not self.stop_event.is_set():
-                # 例としてバッテリーレベルを取得（実際はIMUなども可能）
-                # 取得頻度は sr (10Hz) に合わせる
-                result = await gopro.ble_setting.resolution.get_value()
-                val = float(result.flatten) if result.is_ok else 0.0
-                
-                self.data_queue.put(val)
-                await asyncio.sleep(1.0 / self.sr)
+def initChannel(name, channel, types, opts, vars):
+    if name == 'gopro':
+        channel.dim = 3        # 加速度 X, Y, Z の3次元
+        channel.type = types.FLOAT
+        channel.sr = 50.0      # サンプリングレート 50Hz
+    else:
+        print('unknown channel name')
 
-    def read(self, data):
-        """SSIのメインループから呼ばれるデータ取得（同期）"""
-        for i in range(len(data)):
-            try:
-                # キューから最新データを取り出す。なければ最後の値を保持
-                data[i] = self.data_queue.get_nowait()
-            except queue.Empty:
-                data[i] = 0.0 if i == 0 else data[i-1]
+def connect(opts, vars):
+    print("--- GoPro Connecting ---")
+    # 非同期ループを別スレッドで開始
+    vars['thread'] = threading.Thread(target=_run_gopro_loop, daemon=True)
+    vars['thread'].start()
+    vars['last_val'] = [0.0, 0.0, 0.0]
+    return True
 
-    def disconnect(self):
-        """SSI終了時に呼ばれるクリーンアップ"""
-        self.stop_event.set()
-        if self.thread:
-            self.thread.join(timeout=1.0)
+def _run_gopro_loop():
+    """GoPro SDKを制御するメインループ"""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    async def _task():
+        try:
+            async with WirelessGoPro() as gopro:
+                print("GoPro: Connection Established!")
+                # ※ここで実際のSDKコマンド(加速度取得など)を記述
+                while not _stop_event.is_set():
+                    # テスト用：サイン波でダミーデータを生成
+                    t = time.time()
+                    fake_accel = [np.sin(t), np.cos(t), np.sin(t*0.5)]
+                    _data_queue.put(fake_accel)
+                    await asyncio.sleep(1.0 / 50.0) 
+        except Exception as e:
+            print(f"GoPro Thread Error: {e}")
+
+    loop.run_until_complete(_task())
+
+def read(name, sout, reset, board, opts, vars):
+    """
+    SSIから定期的に呼ばれる読み取り関数
+    sout.num: 要求されているサンプル数
+    """
+    for i in range(sout.num):
+        try:
+            # キューからデータを取り出す
+            val = _data_queue.get_nowait()
+            vars['last_val'] = val
+        except queue.Empty:
+            # データがない場合は前回の値を保持
+            val = vars['last_val']
+        
+        # movella.pyと同様に多次元配列として書き込み [サンプルIndex, 次元Index]
+        if name == 'gopro':
+            for d in range(3):
+                sout[i, d] = float(val[d])
+
+def disconnect(opts, vars):
+    print("--- GoPro Disconnecting ---")
+    _stop_event.set()
+    if 'thread' in vars:
+        vars['thread'].join(timeout=1.0)
