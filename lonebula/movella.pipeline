@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<pipeline>
+    <register>
+        <load name="python310" />
+        <load name="ssicontrol" />
+    </register>
+
+    <!-- Python script -->
+    <object create="PythonBridge:py" module="lonebula.movella">
+        <input pin="run" type="bool" />
+        <output pin="orientation" type="string" />
+    </object>
+
+    <!-- Controller -->
+    <object create="CheckBox" name="run_check" title="Run">
+        <output pin="run" value="[py.run]" />
+    </object>
+    
+    <!-- Viewer -->
+    <object create="TextBox:viewer" title="Movella DOT Orientation">
+        <input pin="py.orientation" />
+    </object>
+
+    <!-- GUI -->
+    <object create="Decorator" title="Movella DOT Controller" icon="true">
+		<area pos="0,0,400,100">run_check</area>
+		<area pos="0,100,400,200">viewer</area>
+        <area pos="400,0,1200,600">console</area>
+    </object>
+</pipeline>
