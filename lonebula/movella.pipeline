@@ -8,15 +8,15 @@
     </register>
 
     <sensor create="PythonSensor" script="movella" syspath="." block="0.1">
-        <output channel="sensor" pin="euler" />
+        <output channel="sensor" pin="dot_full" />
     </sensor>
 
-    <consumer create="FileWriter" path="my_data" type="1">
-        <input pin="euler" frame="0.1s" />
+    <consumer create="FileWriter" path="my_data_9ch" type="1">
+        <input pin="dot_full" frame="0.1s" />
     </consumer>
 
-    <consumer create="SignalPainter" title="Movella DOT Euler Angles" type="2">
-        <input pin="euler" frame="0.1s" />
+    <consumer create="SignalPainter" title="Movella DOT 9-ch Data" type="2">
+        <input pin="dot_full" frame="0.1s" />
     </consumer>
 
 </pipeline>

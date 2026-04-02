@@ -2,7 +2,7 @@ import sys
 import time
 from unittest.mock import MagicMock
 
-# SSI環境でクラッシュする pynput をダミー化
+# pynputのエラー回避
 sys.modules['pynput'] = MagicMock()
 sys.modules['pynput.keyboard'] = MagicMock()
 
@@ -12,88 +12,71 @@ def getOptions(opts, vars):
     pass
 
 def getChannelNames(opts, vars):
-    return { 'sensor' : 'Movella DOT Orientation' }
+    return { 'sensor' : 'Movella DOT 9-ch (Time, Quat, FreeAcc, Status)' }
 
 def initChannel(name, channel, types, opts, vars):
     if name == 'sensor':
-        channel.dim = 3
+        channel.dim = 9        # 1(Time) + 4(Quat) + 3(Acc) + 1(Status) = 9列
         channel.type = types.FLOAT
         channel.sr = 60.0
 
 def connect(opts, vars):
     handler = XdpcHandler()
-    if not handler.initialize():
-        return False
-
+    if not handler.initialize(): return False
     handler.scanForDots()
-    if len(handler.detectedDots()) == 0:
-        print("No devices detected.")
-        return False
-
-    # メソッド名を修正: connectDots() 
-    # これによりスキャンで見つかったすべてのドットに接続を試みます
+    if len(handler.detectedDots()) == 0: return False
     handler.connectDots()
     connected = handler.connectedDots()
-    
-    if len(connected) == 0:
-        print("Failed to connect.")
-        return False
+    if not connected: return False
 
-    # 1台目のデバイスを使用
-    device = connected[0]
-    device.setOutputRate(60)
-    device.setLogOptions(movelladot_pc_sdk.XsLogOptions_Quaternion)
-    device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedEuler)
+    for device in connected:
+        device.setOutputRate(60)
+        # 【重要】クォータニオンと加速度を含むモードに変更
+        device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedQuaternion)
 
     vars['handler'] = handler
-    vars['device'] = device
-    vars['mac'] = device.bluetoothAddress()
+    vars['connected'] = connected
+    vars['mac'] = connected[0].bluetoothAddress()
     vars['start_time'] = time.time()
-    vars['reset_done'] = False
-    print(f"Successfully connected and started: {vars['mac']}")
+    vars['last_data'] = [0.0] * 9 # 9要素で初期化
     return True
 
 def read(name, sout, reset, board, opts, vars):
     handler = vars['handler']
     mac = vars['mac']
-    device = vars['device']
     
-    # 5秒後のHeading Reset（これはそのまま）
-    if not vars.get('reset_done', False) and (time.time() - vars['start_time'] > 5.0):
-        device.resetOrientation(movelladot_pc_sdk.XRM_Heading)
-        print("\nHeading Reset Done.")
-        vars['reset_done'] = True
-
-    # 指定されたサンプル数（sout.num）を埋める
     for i in range(sout.num):
         packet = None
-        # 無限ループにならないよう、少しだけ試行する
-        tries = 0
-        while packet is None and tries < 100:
+        for _ in range(20):
             if handler.packetsAvailable():
                 packet = handler.getNextPacket(mac)
-                if not packet or not packet.containsOrientation():
-                    packet = None
-            else:
-                time.sleep(0.001)
-            tries += 1
-        
+                # クォータニオンと加速度の両方が入っているかチェック
+                if packet and packet.containsOrientation() and packet.containsFreeAcceleration():
+                    break
+            time.sleep(0.001)
+
         if packet:
-            # データが取れた場合
-            euler = packet.orientationEuler()
-            sout[i, 0] = euler.x()
-            sout[i, 1] = euler.y()
-            sout[i, 2] = euler.z()
-        else:
-            # データが取れなかった場合、前回の値を維持するか0を入れる
-            # ここではSSIのフリーズを防ぐために0を入れます
-            sout[i, 0] = 0.0
-            sout[i, 1] = 0.0
-            sout[i, 2] = 0.0
+            # お手本のCSVの順番通りにデータをパッキング
+            time_fine = packet.sampleTimeFine()      # 1: SampleTimeFine
+            quat = packet.orientationQuaternion()    # 2-5: W, X, Y, Z
+            acc = packet.freeAcceleration()          # 6-8: X, Y, Z
+            status = packet.status()                 # 9: Status
+            
+            vars['last_data'] = [
+                float(time_fine),
+                quat[0], quat[1], quat[2], quat[3],
+                acc[0], acc[1], acc[2],
+                float(status)
+            ]
+        
+        # SSIのバッファに9列分書き込み
+        current = vars['last_data']
+        for d in range(9):
+            sout[i, d] = current[d]
 
 def disconnect(opts, vars):
-    if 'device' in vars:
-        vars['device'].stopMeasurement()
+    if 'connected' in vars:
+        for device in vars['connected']:
+            device.stopMeasurement()
     if 'handler' in vars:
         vars['handler'].cleanup()
-    print("Disconnected safely.")
