@@ -1,114 +1,95 @@
 from xdpchandler import *
 
-xdpcHandler = None
-orientationResetDone = False
-startTime = 0
-
-def initialize():
+def getChannelNames(opts, vars):
     """
-    Initializes the Movella DOT devices. This function is called once at the start of the pipeline.
+    Returns a dictionary of channel names and their descriptions.
     """
-    global xdpcHandler, startTime
-    xdpcHandler = XdpcHandler()
+    return {'orientation': 'Movella DOT Orientation Data (Roll, Pitch, Yaw)'}
 
-    if not xdpcHandler.initialize():
+def initChannel(name, channel, types, opts, vars):
+    """
+    Initializes the properties of a given channel.
+    """
+    if name == 'orientation':
+        channel.dim = 3  # We will output 3 dimensions: Roll, Pitch, Yaw
+        channel.type = types.FLOAT
+        channel.sr = 60  # Typical sample rate for Movella DOT
+    else:
+        print(f"Unknown channel name: {name}")
+
+def connect(opts, vars):
+    """
+    Called once when the pipeline starts. Initializes devices and stores state in the `vars` dictionary.
+    """
+    print("Connecting to Movella DOT devices...")
+    handler = XdpcHandler()
+
+    if not handler.initialize():
+        print("Failed to initialize XdpcHandler.")
+        handler.cleanup()
         return False
 
-    xdpcHandler.scanForDots()
-    if len(xdpcHandler.detectedDots()) == 0:
+    handler.scanForDots()
+    if len(handler.detectedDots()) == 0:
         print("No Movella DOT device(s) found. Aborting.")
+        handler.cleanup()
         return False
 
-    xdpcHandler.connectDots()
-
-    if len(xdpcHandler.connectedDots()) == 0:
+    handler.connectDots()
+    if len(handler.connectedDots()) == 0:
         print("Could not connect to any Movella DOT device(s). Aborting.")
+        handler.cleanup()
         return False
 
-    for device in xdpcHandler.connectedDots():
-        if device.setOnboardFilterProfile("General"):
-            print("Successfully set profile to General")
-        else:
+    for device in handler.connectedDots():
+        if not device.setOnboardFilterProfile("General"):
             print("Setting filter profile failed!")
-
-        print("Setting quaternion CSV output")
-        device.setLogOptions(movelladot_pc_sdk.XsLogOptions_Quaternion)
-
-        logFileName = "logfile_" + device.bluetoothAddress().replace(':', '-') + ".csv"
-        print(f"Enable logging to: {logFileName}")
-        if not device.enableLogging(logFileName):
-            print(f"Failed to enable logging. Reason: {device.lastResultText()}")
-
-        print("Putting device into measurement mode.")
         if not device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedEuler):
             print(f"Could not put device into measurement mode. Reason: {device.lastResultText()}")
             continue
-
-    print("\nMain loop. Ready to receive data.")
-    print("-----------------------------------------")
-    s = ""
-    for device in xdpcHandler.connectedDots():
-        s += f"{device.bluetoothAddress():42}"
-    print("%s" % s, flush=True)
-
-    startTime = movelladot_pc_sdk.XsTimeStamp_nowMs()
+    
+    print("Movella DOT connected and in measurement mode.")
+    vars['handler'] = handler
+    vars['devices'] = handler.connectedDots()
     return True
 
-def process(run):
+def read(name, sout, reset, board, opts, vars):
     """
-    Processes data from the Movella DOT devices. This function is called repeatedly by the pipeline.
-    The 'run' parameter controls whether data is processed.
+    Called repeatedly by the pipeline to read data blocks.
     """
-    global xdpcHandler, orientationResetDone, startTime
-    
-    if not run:
-        return ""
+    handler = vars.get('handler')
+    devices = vars.get('devices')
+    if not handler or not devices:
+        return
 
-    if xdpcHandler and xdpcHandler.packetsAvailable():
-        s = ""
-        for device in xdpcHandler.connectedDots():
-            packet = xdpcHandler.getNextPacket(device.portInfo().bluetoothAddress())
-            if packet.containsOrientation():
-                euler = packet.orientationEuler()
-                s += f"Roll:{euler.x():7.2f}, Pitch:{euler.y():7.2f}, Yaw:{euler.z():7.2f}| "
-
-        # Optional: Reset orientation after a certain time
-        if not orientationResetDone and movelladot_pc_sdk.XsTimeStamp_nowMs() - startTime > 5000:
-            for device in xdpcHandler.connectedDots():
-                print(f"\nResetting heading for device {device.portInfo().bluetoothAddress()}: ", end="", flush=True)
-                if device.resetOrientation(movelladot_pc_sdk.XRM_Heading):
-                    print("OK", end="", flush=True)
-                else:
-                    print(f"NOK: {device.lastResultText()}", end="", flush=True)
-            print("\n", end="", flush=True)
-            orientationResetDone = True
+    if name == 'orientation':
+        # We need to provide sout.num samples. We'll read packets and fill the buffer.
+        # For simplicity, we'll use the first connected device.
+        device = devices[0]
         
-        return s
-    
-    return ""
-
-def cleanup():
-    """
-    Cleans up the Movella DOT devices. This function is called when the pipeline stops.
-    """
-    global xdpcHandler
-    if xdpcHandler:
-        print("\n-----------------------------------------", end="", flush=True)
-
-        for device in xdpcHandler.connectedDots():
-            print(f"\nResetting heading to default for device {device.portInfo().bluetoothAddress()}: ", end="", flush=True)
-            if device.resetOrientation(movelladot_pc_sdk.XRM_DefaultAlignment):
-                print("OK", end="", flush=True)
+        for i in range(sout.num):
+            if handler.packetsAvailable():
+                packet = handler.getNextPacket(device.portInfo().bluetoothAddress())
+                if packet.containsOrientation():
+                    euler = packet.orientationEuler()
+                    # Write the 3D sample to the output stream.
+                    # We assume sout.set() or equivalent takes a list/tuple for multi-dim data.
+                    sout[i] = (euler.x(), euler.y(), euler.z())
+                else:
+                    # If no orientation data, write a zero vector
+                    sout[i] = (0.0, 0.0, 0.0)
             else:
-                print(f"NOK: {device.lastResultText()}", end="", flush=True)
-        print("\n", end="", flush=True)
+                # If no packets are available, fill with zeros
+                sout[i] = (0.0, 0.0, 0.0)
 
-        print("\nStopping measurement...")
-        for device in xdpcHandler.connectedDots():
-            if not device.stopMeasurement():
-                print("Failed to stop measurement.")
-            if not device.disableLogging():
-                print("Failed to disable logging.")
-
-        xdpcHandler.cleanup()
-        xdpcHandler = None
+def disconnect(opts, vars):
+    """
+    Called once when the pipeline stops. Cleans up resources.
+    """
+    handler = vars.get('handler')
+    if handler:
+        print("Stopping measurement and disconnecting...")
+        for device in handler.connectedDots():
+            device.stopMeasurement()
+        handler.cleanup()
+        print("Disconnected.")
