@@ -138,8 +138,9 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>C:\Program Files (x86)\ZED SDK\lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.2\lib\x64;C:\ssi\libs\x64\vc142;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sl_zed64.lib;ssi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\ZED SDK\lib;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.2\lib\x64;C:\ssi\libs\x64\vc142;C:\ssi\plugins\ssi_zed\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sl_zed64.lib;ssi.lib;delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>libcurl.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
@@ -147,6 +148,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\ssized.h" />
     <ClInclude Include="include\ZedCamera.h" />
+    <ClInclude Include="include\ZedSkeletonConverter.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -159,6 +161,7 @@
     </ClCompile>
     <ClCompile Include="source\ExportMain.cpp" />
     <ClCompile Include="source\ZedCamera.cpp" />
+    <ClCompile Include="source\ZedSkeletonConverter.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
