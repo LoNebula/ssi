@@ -1,95 +1,93 @@
+import sys
+import time
+from unittest.mock import MagicMock
+
+# SSI環境（コンソールがない環境）でエラーになる pynput をダミー化
+sys.modules['pynput'] = MagicMock()
+sys.modules['pynput.keyboard'] = MagicMock()
+
 from xdpchandler import *
 
+def getOptions(opts, vars):
+    pass
+
 def getChannelNames(opts, vars):
-    """
-    Returns a dictionary of channel names and their descriptions.
-    """
-    return {'orientation': 'Movella DOT Orientation Data (Roll, Pitch, Yaw)'}
+    # SSIの要求通り、値に文字列（説明文）を入れた辞書を返します
+    return { 'sensor' : 'Movella DOT Orientation (Euler)' }
 
 def initChannel(name, channel, types, opts, vars):
-    """
-    Initializes the properties of a given channel.
-    """
-    if name == 'orientation':
-        channel.dim = 3  # We will output 3 dimensions: Roll, Pitch, Yaw
+    # 元のコードに合わせて 60Hz, 3次元(FLOAT) に設定
+    if name == 'sensor':
+        channel.dim = 3
         channel.type = types.FLOAT
-        channel.sr = 60  # Typical sample rate for Movella DOT
-    else:
-        print(f"Unknown channel name: {name}")
+        channel.sr = 60.0
 
 def connect(opts, vars):
-    """
-    Called once when the pipeline starts. Initializes devices and stores state in the `vars` dictionary.
-    """
-    print("Connecting to Movella DOT devices...")
+    # movelladot_pc_sdk_receive_data.py の接続ロジック
     handler = XdpcHandler()
-
     if not handler.initialize():
-        print("Failed to initialize XdpcHandler.")
-        handler.cleanup()
         return False
 
     handler.scanForDots()
     if len(handler.detectedDots()) == 0:
-        print("No Movella DOT device(s) found. Aborting.")
-        handler.cleanup()
         return False
 
     handler.connectDots()
-    if len(handler.connectedDots()) == 0:
-        print("Could not connect to any Movella DOT device(s). Aborting.")
-        handler.cleanup()
+    connected = handler.connectedDots()
+    if not connected:
         return False
 
-    for device in handler.connectedDots():
-        if not device.setOnboardFilterProfile("General"):
-            print("Setting filter profile failed!")
-        if not device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedEuler):
-            print(f"Could not put device into measurement mode. Reason: {device.lastResultText()}")
-            continue
-    
-    print("Movella DOT connected and in measurement mode.")
+    # 接続した全デバイスに対して設定（元のコードに準拠）
+    for device in connected:
+        device.setOutputRate(60)
+        device.setLogOptions(movelladot_pc_sdk.XsLogOptions_Quaternion)
+        device.startMeasurement(movelladot_pc_sdk.XsPayloadMode_ExtendedEuler)
+
+    # 後の関数で使う変数を保持
     vars['handler'] = handler
-    vars['devices'] = handler.connectedDots()
-    return True
+    vars['connected'] = connected
+    vars['start_time'] = time.time()
+    vars['reset_done'] = False
+    
+    # 1台目のMACアドレスを取得（read用）
+    vars['mac'] = connected[0].bluetoothAddress()
+    print(f"Connected to: {vars['mac']}")
 
 def read(name, sout, reset, board, opts, vars):
-    """
-    Called repeatedly by the pipeline to read data blocks.
-    """
-    handler = vars.get('handler')
-    devices = vars.get('devices')
-    if not handler or not devices:
-        return
+    handler = vars['handler']
+    mac = vars['mac']
+    connected = vars['connected']
+    
+    # 元のコードにある「5秒後のHeading Reset」ロジック
+    if not vars['reset_done'] and (time.time() - vars['start_time'] > 5.0):
+        for device in connected:
+            device.resetOrientation(movelladot_pc_sdk.XRM_Heading)
+        print("\nOrientation Reset (Heading) Done.")
+        vars['reset_done'] = True
 
-    if name == 'orientation':
-        # We need to provide sout.num samples. We'll read packets and fill the buffer.
-        # For simplicity, we'll use the first connected device.
-        device = devices[0]
-        
-        for i in range(sout.num):
+    # 指定サンプル数分データを取得
+    for i in range(sout.num):
+        packet = None
+        while packet is None:
             if handler.packetsAvailable():
-                packet = handler.getNextPacket(device.portInfo().bluetoothAddress())
-                if packet.containsOrientation():
-                    euler = packet.orientationEuler()
-                    # Write the 3D sample to the output stream.
-                    # We assume sout.set() or equivalent takes a list/tuple for multi-dim data.
-                    sout[i] = (euler.x(), euler.y(), euler.z())
-                else:
-                    # If no orientation data, write a zero vector
-                    sout[i] = (0.0, 0.0, 0.0)
+                packet = handler.getNextPacket(mac)
+                if not packet.containsOrientation():
+                    packet = None
             else:
-                # If no packets are available, fill with zeros
-                sout[i] = (0.0, 0.0, 0.0)
+                time.sleep(0.001)
+        
+        # Euler角 (Roll, Pitch, Yaw)
+        euler = packet.orientationEuler()
+        sout[i, 0] = euler.x()
+        sout[i, 1] = euler.y()
+        sout[i, 2] = euler.z()
 
 def disconnect(opts, vars):
-    """
-    Called once when the pipeline stops. Cleans up resources.
-    """
-    handler = vars.get('handler')
-    if handler:
-        print("Stopping measurement and disconnecting...")
-        for device in handler.connectedDots():
+    # 元のコードの終了ロジック（DefaultAlignmentへのリセットと停止）
+    if 'connected' in vars:
+        for device in vars['connected']:
+            device.resetOrientation(movelladot_pc_sdk.XRM_DefaultAlignment)
             device.stopMeasurement()
-        handler.cleanup()
-        print("Disconnected.")
+    if 'handler' in vars:
+        vars['handler'].cleanup()
+    print("Disconnected safely.")

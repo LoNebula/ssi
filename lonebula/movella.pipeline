@@ -1,38 +1,22 @@
 <?xml version="1.0"?>
-<pipeline>
+<pipeline ssi-v="1">
 
-	<register>
-		<!--
-			We load the python310 plugin, as it is available in this project.
-			This is independent of any system-wide Python installation.
-		-->
-		<load name="python310"/>
-		<load name="graphic"/>
-	</register>	
-	
-	<!--
-		This creates a sensor from a Python script. SSI will call the functions
-		(getChannelNames, initChannel, connect, read, disconnect) in 'lonebula.movella.py'.
-		The 'block' option defines how many seconds of data we want to read per cycle.
-	-->
-	<sensor create="PythonSensor" script="lonebula.movella" block="0.1">
-		<output channel="orientation" pin="orientation_signal"/>		
-	</sensor>
-	
-	<!--
-		The 'orientation_signal' pin provides a 3-dimensional float stream (Roll, Pitch, Yaw).
-		We use a SignalPainter to visualize these three dimensions.
-	-->
-	<consumer create="SignalPainter:plot" title="Movella Orientation (Roll, Pitch, Yaw)" size="10.0">
-		<input pin="orientation_signal" frame="0.2s"/>
-	</consumer>		
+    <register>
+        <load name="ssipython310" />
+        <load name="ssigraphic" />
+        <load name="ssiioput" /> 
+	</register>
 
-	<!--
-		This sets up the user interface.
-	-->
-	<object create="Decorator" icon="true" title="Movella DOT Viewer">
-		<area pos="0,0,800,300">console</area>
-		<area pos="0,300,800,600">plot</area>
-	</object>
-	
+    <sensor create="PythonSensor" script="movella" syspath="." block="0.1">
+        <output channel="sensor" pin="euler" />
+    </sensor>
+
+    <consumer create="FileWriter" path="my_data" type="csv">
+        <input pin="euler" frame="0.1s" />
+    </consumer>
+
+    <consumer create="SignalPainter" title="Movella DOT Euler Angles" type="2">
+        <input pin="euler" frame="0.1s" />
+    </consumer>
+
 </pipeline>
