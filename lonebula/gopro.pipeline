@@ -1,15 +1,14 @@
 <?xml version="1.0"?>
 <pipeline>
     <register>
-        <load name="ssipython311"/>
-        <load name="ssiio"/>
+        <load name="ssipython310"/>
     </register>
 
-    <sensor create="Python" script="gopro" syspath="." sr="1.0">
+    <sensor create="PythonSensor" script="gopro_ssi" syspath="C:\ssi\lonebula" block="1.0">
         <output channel="state" pin="gopro_state"/>
     </sensor>
 
-    <consumer create="FileWriter" path="gopro_status" type="csv">
-        <input pin="gopro_state" frame="1"/>
-    </consumer>
+    <object create="Decorator" icon="true" title="Pipeline">
+        <area pos="0,0,400,600">console</area>
+    </object>
 </pipeline>
