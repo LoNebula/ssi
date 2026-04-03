@@ -1,22 +1,41 @@
-import asyncio
-from open_gopro import WirelessGoPro
-from open_gopro.models import constants
+# gopro_ssi.py
+import requests
+import time
 
-async def main():
-    # interfaces={WirelessGoPro.Interface.BLE} を指定して、
-    # エラーの出るWi-Fi接続をスキップします。
-    async with WirelessGoPro(interfaces={WirelessGoPro.Interface.BLE}) as gopro:
-        print("GoProにBluetoothで接続しました。")
+BASE = "http://10.5.5.9:8080/gopro/camera"
 
-        # 録画開始
-        print("録画を開始します...")
-        await gopro.ble_setting.shutter.set(constants.Toggle.ENABLE)
+# SSIにデータの次元数と型を伝える
+def getSampleDimensionOut():
+    return 1
 
-        await asyncio.sleep(5)
+def getSampleTypeOut():
+    return 1 # FLOAT
 
-        # 録画停止
-        print("録画を停止します...")
-        await gopro.ble_setting.shutter.set(constants.Toggle.DISABLE)
+def getSampleRateOut():
+    return 1.0 # 1Hz (1秒に1回ステータスを取得)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+def connect():
+    """SSIのパイプライン開始時に呼ばれる（録画開始）"""
+    try:
+        requests.get(f"{BASE}/shutter/start", timeout=3)
+        print("GoPro Recording Started")
+    except Exception as e:
+        print(f"Failed to start GoPro: {e}")
+
+def disconnect():
+    """SSIのパイプライン終了時に呼ばれる（録画停止）"""
+    try:
+        requests.get(f"{BASE}/shutter/stop", timeout=3)
+        print("GoPro Recording Stopped")
+    except Exception as e:
+        print(f"Failed to stop GoPro: {e}")
+
+def read(opts, vars, data):
+    """SSI実行中に連続して呼ばれる（ステータス保存用）"""
+    try:
+        r = requests.get(f"{BASE}/state", timeout=3)
+        # 接続成功状態として 1.0 をSSIに渡す（本来はJSONから特定の設定値を抽出して渡すことも可能）
+        data[0] = 1.0
+    except:
+        # エラー時は 0.0
+        data[0] = 0.0

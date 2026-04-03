@@ -1,22 +1,15 @@
 <?xml version="1.0"?>
-<pipeline ssi-v="1">
-
+<pipeline>
     <register>
-        <load name="ssipython310" />
-        <load name="ssigraphic" />
+        <load name="ssipython311"/>
+        <load name="ssiio"/>
     </register>
 
-    <sensor create="PythonSensor" script="gopro" block="0.1">
-        <output channel="gopro" pin="gopro_data" />
+    <sensor create="Python" script="gopro" syspath="." sr="1.0">
+        <output channel="state" pin="gopro_state"/>
     </sensor>
 
-    <consumer create="SignalPainter" title="GoPro 3-ch Acceleration" size="10.0">
-        <input pin="gopro_data" frame="0.1s" />
+    <consumer create="FileWriter" path="gopro_status" type="csv">
+        <input pin="gopro_state" frame="1"/>
     </consumer>
-
-    <object create="Decorator" icon="true" title="GoPro Pipeline">
-        <area pos="0,0,400,600">console</area>
-        <area pos="400,0,800,600">plot*</area>
-    </object>
-
 </pipeline>
