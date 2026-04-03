@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<pipeline>
+    <register>
+        <load name="ssipython311"/>
+        <load name="ssiio"/>
+    </register>
+
+    <sensor create="Python" script="gopro" syspath="." sr="1.0">
+        <output channel="state" pin="gopro_state"/>
+    </sensor>
+
+    <consumer create="FileWriter" path="gopro_status" type="csv">
+        <input pin="gopro_state" frame="1"/>
+    </consumer>
+</pipeline>
