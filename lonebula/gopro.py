@@ -1,69 +1,22 @@
-import os
-import sys
-
-# --- DLL load failed 対策: Anaconda の Library\bin を直接登録 ---
-conda_env = r'C:\Users\shogo\anaconda3\envs\ssi310'
-dll_dir = os.path.join(conda_env, 'Library', 'bin')
-if os.path.exists(dll_dir):
-    os.add_dll_directory(dll_dir)
-# -----------------------------------------------------------
-
-import threading
 import asyncio
-import queue
-import time
-import numpy as np
 from open_gopro import WirelessGoPro
+from open_gopro.models import constants
 
-# 以下、以前作成した関数群 (getChannelNames, initChannel, connect, read, disconnect)
-def getChannelNames(opts, vars):
-    return { 'gopro' : 'GoPro Sensor Data' }
+async def main():
+    # interfaces={WirelessGoPro.Interface.BLE} を指定して、
+    # エラーの出るWi-Fi接続をスキップします。
+    async with WirelessGoPro(interfaces={WirelessGoPro.Interface.BLE}) as gopro:
+        print("GoProにBluetoothで接続しました。")
 
-def initChannel(name, channel, types, opts, vars):
-    if name == 'gopro':
-        channel.dim = 3
-        channel.type = types.FLOAT
-        channel.sr = 50.0
+        # 録画開始
+        print("録画を開始します...")
+        await gopro.ble_setting.shutter.set(constants.Toggle.ENABLE)
 
-def connect(opts, vars):
-    print("Connecting to GoPro...")
-    vars['data_queue'] = queue.Queue()
-    vars['stop_event'] = threading.Event()
-    vars['thread'] = threading.Thread(target=_run_loop, args=(vars,), daemon=True)
-    vars['thread'].start()
-    vars['last_val'] = [0.0, 0.0, 0.0]
-    return True
+        await asyncio.sleep(5)
 
-def _run_loop(vars):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    
-    async def _task():
-        try:
-            async with WirelessGoPro() as gopro:
-                print("GoPro: Connected!")
-                while not vars['stop_event'].is_set():
-                    # テスト用ダミーデータ
-                    t = time.time()
-                    vars['data_queue'].put([np.sin(t), np.cos(t), 0.0])
-                    await asyncio.sleep(1.0 / 50.0)
-        except Exception as e:
-            print(f"GoPro Error: {e}")
+        # 録画停止
+        print("録画を停止します...")
+        await gopro.ble_setting.shutter.set(constants.Toggle.DISABLE)
 
-    loop.run_until_complete(_task())
-
-def read(name, sout, reset, board, opts, vars):
-    for i in range(sout.num):
-        try:
-            val = vars['data_queue'].get_nowait()
-            vars['last_val'] = val
-        except:
-            val = vars['last_val']
-        
-        if name == 'gopro':
-            for d in range(3):
-                sout[i, d] = float(val[d])
-
-def disconnect(opts, vars):
-    if 'stop_event' in vars:
-        vars['stop_event'].set()
+if __name__ == "__main__":
+    asyncio.run(main())
