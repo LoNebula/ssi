@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-16" standalone="yes"?>
+<pipeline>
+
+	<register>
+		<load name="ssigraphic" />
+		<load name="ssiaudio" />
+		<load name="ssiskeleton" />
+		<load name="ssi_zed" />
+		<load name="ssiioput" />
+		<load name="ssiffmpeg" />
+		<load name="ssiimage" />
+		<load name="ssicamera" />
+		<load name="ssisignal" />
+	</register>
+	
+	<!-- set framework options -->	
+	
+	<framework console="true" sync="true" slisten="$(waitforsignal)" sport="6666"/> 
+
+	<!-- camera sensor -->
+	
+	<sensor create="ZedCamera:zed">
+		<output channel="zed_rgb" pin="video" size="$(buffersize)s"/>
+		<output channel="zed_depth" pin="depth" size="$(buffersize)s"/>
+		<output channel="zed_imu" pin="imu" size="$(buffersize)s"/>
+		<output channel="zed_skeleton" pin="skel" size="$(buffersize)s"/>
+	</sensor>
+	
+	<!-- convert skeleton -->
+	
+	<transformer create="ZedSkeletonConverter:skelconvert">
+		<input pin="skel" frame="1"/>
+		<output pin="skelconv"/>
+	</transformer>
+	
+	<!-- audio sensors: TAMAGO mic array + close-talk mic, both always active -->
+	<!-- mono downmix of TAMAGO array (channel 0) for streaming -->
+
+	<sensor create="Audio:audiotamago" option="options/audiotamago" scale="true" sr="48000" blockInSamples="0.01" channels="8">
+		<output channel="audio" pin="audio" size="2.0s"/>
+	</sensor>
+
+	<transformer create="Selector:audiotamago_mono" select="0">
+		<input pin="audio" frame="512"/>
+		<output pin="audiomono"/>
+	</transformer>
+
+	<sensor create="Audio:audioclose" option="options/audiomic" scale="true" sr="48000" blockInSamples="0.01">
+		<output channel="audio" pin="audioclosetalk"/>
+	</sensor>
+	
+	<!-- resize -->
+	
+	<gate open="$(portrait)">	
+		<transformer create="CVCrop:cropvideo" scaled="false" region="830,280,480,720">
+			<input pin="video" frame="1" delta="0"/>
+			<output pin="resize"/>
+		</transformer>	
+	</gate>
+	 
+	<gate close="$(portrait)">	
+		<transformer create="CVResize:resizevideo" width="640" height="480" scaled="false">
+			<input pin="video" frame="1" delta="0"/>
+			<output pin="resize"/>
+		</transformer>
+	 </gate>
+	
+	<!--stream -->
+
+	<consumer create="FFMPEGWriter:sendvideo" url="udp://$(ip):$(portvideo)" format="mpegts" stream="true">
+		<input pin="resize" frame="1" />
+	</consumer>
+
+	<gate open="$(closetalk)">
+		<consumer create="FFMPEGWriter:sendaudio" url="udp://$(ip):$(portaudio)" format="mpegts" stream="true">
+			<input pin="audioclosetalk" frame="0.0333s" />
+		</consumer>
+	</gate>
+
+	<gate close="$(closetalk)">
+		<consumer create="FFMPEGWriter:sendaudio" url="udp://$(ip):$(portaudio)" format="mpegts" stream="true">
+			<input pin="audiomono" frame="0.0333s" />
+		</consumer>
+	</gate>
+	
+	<!-- store data -->
+	
+	<gate open="$(record)">	
+	
+		<execute name="mkdir.bat" args="data\$(date)" type="pre" wait="-1"/>
+	
+		<gate open="$(ffmpeg)">
+	
+			<gate open="$(closetalk)">	
+				<consumer create="FFMPEGWriter:recordvideo" url="data/$(date)/User$(userid)_video.mp4">
+					<input pin="video" frame="1" />
+				</consumer>
+			</gate>
+
+			<gate close="$(closetalk)">
+				<consumer create="FFMPEGWriter:recordvideo" url="data/$(date)/User$(userid)_video.mp4">
+					<input pin="video" frame="1" />
+				</consumer>	
+			</gate>
+			
+		</gate>
+		
+		<gate close="$(ffmpeg)">
+			
+			<gate open="$(closetalk)">	
+				<consumer create="CameraWriter:camerawriter" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_video.avi">
+					<input pin="video" frame="1" delta="0"/>
+				</consumer>	
+			</gate>
+			
+			<gate close="$(closetalk)">	
+				<consumer create="CameraWriter:camerawriter" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_video.avi">
+					<input pin="video" frame="1" delta="0"/>
+				</consumer>	
+			</gate>		
+		
+		</gate>
+
+		<consumer create="FileWriter:recordskel" path="data/$(date)/User$(userid)_skel.csv" type="1" delim=",">
+			<input pin="skel" frame="1.0s"/>
+		</consumer>	
+		
+		<consumer create="FileWriter:recordimu" path="data/$(date)/User$(userid)_imu" type="0">
+			<input pin="imu" frame="1.0s"/>
+		</consumer>
+
+		<consumer create="WavWriter:recordaudiotamago" path="data/$(date)/User$(userid)_tamago.wav">
+			<input pin="audio" frame="512"/>
+		</consumer>
+	
+		<consumer create="WavWriter:recordaudioclose" path="data/$(date)/User$(userid)_close.wav">
+			<input pin="audioclosetalk" frame="512"/>
+		</consumer>
+
+		<gate open="$(storedepthdata)">	
+			<consumer create="FileWriter:recorddepth" path="data/$(date)/User$(userid)_depth" type="$(compression)">
+				<input pin="depth" frame="1.0s"/>
+			</consumer> 
+		</gate>
+		
+	</gate>
+	
+	<!-- receive data -->
+	
+	<gate open="$(portrait)">
+		<sensor create="FFMPEGReader:receivevideo" url="udp://$(ip):$(portvideo)" fps="$(sr)" width="480" height="720" stream="true">		
+			<output channel="video" pin="rvideo" size="2.0s"/>
+		</sensor>
+	</gate>
+	
+	<gate close="$(portrait)">
+		<sensor create="FFMPEGReader:receivevideo" url="udp://$(ip):$(portvideo)" fps="$(sr)" width="640" height="480" stream="true">		
+			<output channel="video" pin="rvideo" size="2.0s"/>
+		</sensor>
+	</gate>
+	
+	<sensor create="FFMPEGReader:receiveaudio" url="udp://$(ip):$(portaudio)" asr="48000.0" stream="true">		
+		<output channel="audio" pin="raudio" size="2.0s"/>
+	</sensor>
+	
+	<!-- stream to big brother -->
+	
+	<gate open="$(bigbrother)">
+	
+		<consumer create="FFMPEGWriter:sendvideobb" url="udp://$(ipbb):$(portvideobb)" format="mpegts" stream="true">
+			<input pin="resize" frame="1" />
+		</consumer>	
+		
+		<gate open="$(closetalk)">	
+			<consumer create="FFMPEGWriter:sendaudiobb" url="udp://$(ipbb):$(portaudiobb)" format="mpegts" stream="true">
+				<input pin="audioclosetalk" frame="0.0333s" />
+			</consumer>		
+		</gate>
+
+		<gate close="$(closetalk)">
+			<consumer create="FFMPEGWriter:sendaudiobb" url="udp://$(ipbb):$(portaudiobb)" format="mpegts" stream="true">
+				<input pin="audiomono" frame="0.0333s" />
+			</consumer>
+		</gate>
+	
+	</gate>
+	
+	<!-- audio player -->	
+	
+	<consumer create="AudioPlayer:audioplayer" option="options/speaker">
+		<input pin="raudio" frame="0.1s"/>
+	</consumer>
+	
+	<!-- visualization -->	
+	
+	<consumer create="VideoPainter:rplot" title="" flip="false">
+		<input pin="rvideo" frame="1" delta="0"/>
+	</consumer>
+	
+	<consumer create="VideoPainter:plot" title="VIDEO (raw)" flip="false">
+		<input pin="video" frame="1" delta="0"/>
+	</consumer>
+	
+	<consumer create="VideoPainter:cplot" title="VIDEO (cropped)" flip="false">
+		<input pin="resize" frame="1" delta="0"/>
+	</consumer> 
+	
+	<transformer create="SkeletonPainter:skelpaint">
+		<input pin="skelconv" frame="1"/>
+		<output pin="skelpaint"/>
+	</transformer> 
+
+	<consumer create="VideoPainter:plot" title="SKELETON" flip="false">
+		<input pin="skelpaint" frame="1"/>
+	</consumer>
+
+	<gate close="$(closetalk)">
+		<consumer create="SignalPainter:plot" title="AUDIO (TAMAGO array)" size="10" type="2">
+			<input pin="audio" frame="0.0333s"/>
+		</consumer>
+	</gate>
+
+	<gate open="$(closetalk)">
+		<consumer create="SignalPainter:plot" title="AUDIO (close talk)" size="10" type="2">
+			<input pin="audioclosetalk" frame="0.0333s"/>
+		</consumer>
+	</gate>
+
+	<!-- decoration -->	
+	
+	<gate open="$(portrait)">
+		<object create="Decorator" icon="true" title="Pipeline">
+			<area pos="0,0,400,600">console</area>
+			<area pos="400,0,320,1000" nh="1">plot*</area>
+			<area pos="720,0,480,720">cplot*</area>			
+			<area pos="2320,0,480,720">rplot*</area>	
+		</object>
+	</gate>	
+	
+	<gate close="$(portrait)">
+		<object create="Decorator" icon="true" title="Pipeline">
+			<area pos="0,0,400,600">console</area>
+			<area pos="400,0,320,480">plot*</area>	
+			<area pos="720,0,640,480">rplot*</area>	
+		</object>
+	</gate>	
+	
+</pipeline>
