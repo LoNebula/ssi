@@ -42,9 +42,11 @@
 		</transformer>
 	</gate>
 
-	<sensor create="Audio:audioclose" option="options/audiomic" scale="true" sr="48000" blockInSamples="0.01">
-		<output channel="audio" pin="audioclosetalk"/>
-	</sensor>
+	<gate open="$(closetalk)">
+		<sensor create="Audio:audioclose" option="options/audiomic" scale="true" sr="48000" blockInSamples="0.01">
+			<output channel="audio" pin="audioclosetalk"/>
+		</sensor>
+	</gate>
 	
 	<gate open="$(portrait)">	
 		<transformer create="CVCrop:cropvideo" scaled="false" region="830,280,480,720">
@@ -65,17 +67,15 @@
 	</consumer>
 
 	<gate open="$(closetalk)">
-		<consumer create="FFMPEGWriter:sendaudio" url="udp://$(ip):$(portaudio)" format="mpegts" stream="true">
+		<consumer create="FFMPEGWriter:sendaudio_close" url="udp://$(ip):$(portaudio)" format="mpegts" stream="true">
 			<input pin="audioclosetalk" frame="0.0333s" />
 		</consumer>
 	</gate>
 
-	<gate close="$(closetalk)">
-		<gate open="$(tamago)">
-			<consumer create="FFMPEGWriter:sendaudio" url="udp://$(ip):$(portaudio)" format="mpegts" stream="true" acodec="mp2">
-				<input pin="audiomono" frame="0.0333s" />
-			</consumer>
-		</gate>
+	<gate open="$(tamago)">
+		<consumer create="FFMPEGWriter:sendaudio_tamago" url="udp://$(ip):3334" format="mpegts" stream="true" acodec="mp2">
+			<input pin="audiomono" frame="0.0333s" />
+		</consumer>
 	</gate>
 	
 	<gate open="$(record)">	
@@ -83,35 +83,15 @@
 		<execute name="mkdir.bat" args="data\$(date)" type="pre" wait="-1"/>
 	
 		<gate open="$(ffmpeg)">
-	
-			<gate open="$(closetalk)">	
-				<consumer create="FFMPEGWriter:recordvideo" url="data/$(date)/User$(userid)_video.mp4">
-					<input pin="video" frame="1" />
-				</consumer>
-			</gate>
-
-			<gate close="$(closetalk)">
-				<consumer create="FFMPEGWriter:recordvideo" url="data/$(date)/User$(userid)_video.mp4">
-					<input pin="video" frame="1" />
-				</consumer>	
-			</gate>
-			
+			<consumer create="FFMPEGWriter:recordvideo" url="data/$(date)/User$(userid)_video.mp4">
+				<input pin="video" frame="1" />
+			</consumer>
 		</gate>
 		
 		<gate close="$(ffmpeg)">
-			
-			<gate open="$(closetalk)">	
-				<consumer create="CameraWriter:camerawriter" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_video.avi">
-					<input pin="video" frame="1" delta="0"/>
-				</consumer>	
-			</gate>
-			
-			<gate close="$(closetalk)">	
-				<consumer create="CameraWriter:camerawriter" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_video.avi">
-					<input pin="video" frame="1" delta="0"/>
-				</consumer>	
-			</gate>		
-		
+			<consumer create="CameraWriter:camerawriter" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_video.avi">
+				<input pin="video" frame="1" delta="0"/>
+			</consumer>	
 		</gate>
 
 		<consumer create="FileWriter:recordskel" path="data/$(date)/User$(userid)_skel.csv" type="1" delim=",">
@@ -132,9 +112,11 @@
 			</consumer>
 		</gate>
 
-		<consumer create="WavWriter:recordaudioclose" path="data/$(date)/User$(userid)_close.wav">
-			<input pin="audioclosetalk" frame="512"/>
-		</consumer>
+		<gate open="$(closetalk)">
+			<consumer create="WavWriter:recordaudioclose" path="data/$(date)/User$(userid)_close.wav">
+				<input pin="audioclosetalk" frame="512"/>
+			</consumer>
+		</gate>
 
 		<gate open="$(storedepthdata)">	
 			<consumer create="FileWriter:recorddepth" path="data/$(date)/User$(userid)_depth" type="$(compression)">
@@ -156,9 +138,17 @@
 		</sensor>
 	</gate>
 	
-	<sensor create="FFMPEGReader:receiveaudio" url="udp://$(ip):$(portaudio)" asr="48000.0" stream="true">		
-		<output channel="audio" pin="raudio" size="2.0s"/>
-	</sensor>
+	<gate open="$(closetalk)">
+		<sensor create="FFMPEGReader:receiveaudio_close" url="udp://$(ip):$(portaudio)" asr="48000.0" stream="true">		
+			<output channel="audio" pin="raudio_close" size="2.0s"/>
+		</sensor>
+	</gate>
+
+	<gate open="$(tamago)">
+		<sensor create="FFMPEGReader:receiveaudio_tamago" url="udp://$(ip):3334" asr="48000.0" stream="true">		
+			<output channel="audio" pin="raudio_tamago" size="2.0s"/>
+		</sensor>
+	</gate>
 
 	<sensor create="FFMPEGReader:receivegopro" url="udp://10.5.5.9:8554" fps="$(sr)" stream="true">		
 		<output channel="video" pin="gopro_video" size="$(buffersize)s"/>
@@ -171,22 +161,30 @@
 		</consumer>	
 		
 		<gate open="$(closetalk)">	
-			<consumer create="FFMPEGWriter:sendaudiobb" url="udp://$(ipbb):$(portaudiobb)" format="mpegts" stream="true">
+			<consumer create="FFMPEGWriter:sendaudiobb_close" url="udp://$(ipbb):$(portaudiobb)" format="mpegts" stream="true">
 				<input pin="audioclosetalk" frame="0.0333s" />
 			</consumer>		
 		</gate>
 
-		<gate close="$(closetalk)">
-			<consumer create="FFMPEGWriter:sendaudiobb" url="udp://$(ipbb):$(portaudiobb)" format="mpegts" stream="true" acodec="mp2">
+		<gate open="$(tamago)">
+			<consumer create="FFMPEGWriter:sendaudiobb_tamago" url="udp://$(ipbb):3335" format="mpegts" stream="true" acodec="mp2">
 				<input pin="audiomono" frame="0.0333s" />
 			</consumer>
 		</gate>
 	
 	</gate>
 	
-	<consumer create="AudioPlayer:audioplayer" option="options/speaker">
-		<input pin="raudio" frame="0.1s"/>
-	</consumer>
+	<gate open="$(closetalk)">
+		<consumer create="AudioPlayer:audioplayer_close" option="options/speaker">
+			<input pin="raudio_close" frame="0.1s"/>
+		</consumer>
+	</gate>
+
+	<gate open="$(tamago)">
+		<consumer create="AudioPlayer:audioplayer_tamago" option="options/speaker">
+			<input pin="raudio_tamago" frame="0.1s"/>
+		</consumer>
+	</gate>
 	
 	<consumer create="VideoPainter:rplot" title="" flip="false">
 		<input pin="rvideo" frame="1" delta="0"/>
@@ -248,6 +246,7 @@
 			<area pos="1680,480,480,240">plot_skel</area>
 			<area pos="1680,720,480,240">plot_gopro</area>
 			<area pos="1680,0,480,480">plot_gopro_video</area>
+			<area pos="2160,0,480,480">plot_close</area>
 			<area pos="2160,480,480,480">plot_tamago</area>
 		</object>
 	</gate>	
@@ -263,7 +262,8 @@
 			<area pos="1840,480,320,360">plot_gopro</area>
 			<area pos="1360,0,640,480">plot_gopro_video</area>
 			<area pos="2000,0,480,480">plot_movella</area>
-			<area pos="2480,0,600,840">plot_tamago</area>
+			<area pos="2480,0,600,420">plot_close</area>
+			<area pos="2480,420,600,420">plot_tamago</area>
 		</object>
 	</gate>
 	
