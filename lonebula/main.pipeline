@@ -11,45 +11,40 @@
 		<load name="ssiimage" />
 		<load name="ssicamera" />
 		<load name="ssisignal" />
+		<load name="ssipython310"/>
 	</register>
-	
-	<!-- set framework options -->	
 	
 	<framework console="true" sync="true" slisten="$(waitforsignal)" sport="6666"/> 
 
-	<!-- camera sensor -->
-	
 	<sensor create="ZedCamera:zed">
 		<output channel="zed_rgb" pin="video" size="$(buffersize)s"/>
 		<output channel="zed_depth" pin="depth" size="$(buffersize)s"/>
 		<output channel="zed_imu" pin="imu" size="$(buffersize)s"/>
 		<output channel="zed_skeleton" pin="skel" size="$(buffersize)s"/>
 	</sensor>
-	
-	<!-- convert skeleton -->
-	
-	<transformer create="ZedSkeletonConverter:skelconvert">
-		<input pin="skel" frame="1"/>
-		<output pin="skelconv"/>
-	</transformer>
-	
-	<!-- audio sensors: TAMAGO mic array + close-talk mic, both always active -->
-	<!-- mono downmix of TAMAGO array (channel 0) for streaming -->
 
-	<sensor create="Audio:audiotamago" option="options/audiotamago" scale="true" sr="48000" blockInSamples="0.01" channels="8">
-		<output channel="audio" pin="audio" size="2.0s"/>
+	<sensor create="PythonSensor" script="gopro_ssi" syspath="C:\ssi\lonebula" block="1.0">
+		<output channel="state" pin="gopro_state"/>
+	</sensor>
+	
+	<sensor create="PythonSensor" script="movella" syspath="C:\ssi\lonebula" block="0.1">
+		<output channel="sensor" pin="movella_data" />
 	</sensor>
 
-	<transformer create="Selector:audiotamago_mono" select="0">
-		<input pin="audio" frame="512"/>
-		<output pin="audiomono"/>
-	</transformer>
+	<gate open="$(tamago)">
+		<sensor create="Audio:audiotamago" option="options/audiotamago" scale="true" sr="48000" blockInSamples="0.01" channels="8">
+			<output channel="audio" pin="audio" size="2.0s"/>
+		</sensor>
+
+		<transformer create="Selector:audiotamago_mono" select="0">
+			<input pin="audio" frame="512"/>
+			<output pin="audiomono"/>
+		</transformer>
+	</gate>
 
 	<sensor create="Audio:audioclose" option="options/audiomic" scale="true" sr="48000" blockInSamples="0.01">
 		<output channel="audio" pin="audioclosetalk"/>
 	</sensor>
-	
-	<!-- resize -->
 	
 	<gate open="$(portrait)">	
 		<transformer create="CVCrop:cropvideo" scaled="false" region="830,280,480,720">
@@ -65,8 +60,6 @@
 		</transformer>
 	 </gate>
 	
-	<!--stream -->
-
 	<consumer create="FFMPEGWriter:sendvideo" url="udp://$(ip):$(portvideo)" format="mpegts" stream="true">
 		<input pin="resize" frame="1" />
 	</consumer>
@@ -78,12 +71,12 @@
 	</gate>
 
 	<gate close="$(closetalk)">
-		<consumer create="FFMPEGWriter:sendaudio" url="udp://$(ip):$(portaudio)" format="mpegts" stream="true">
-			<input pin="audiomono" frame="0.0333s" />
-		</consumer>
+		<gate open="$(tamago)">
+			<consumer create="FFMPEGWriter:sendaudio" url="udp://$(ip):$(portaudio)" format="mpegts" stream="true" acodec="mp2">
+				<input pin="audiomono" frame="0.0333s" />
+			</consumer>
+		</gate>
 	</gate>
-	
-	<!-- store data -->
 	
 	<gate open="$(record)">	
 	
@@ -129,10 +122,16 @@
 			<input pin="imu" frame="1.0s"/>
 		</consumer>
 
-		<consumer create="WavWriter:recordaudiotamago" path="data/$(date)/User$(userid)_tamago.wav">
-			<input pin="audio" frame="512"/>
+		<consumer create="FileWriter:recordmovella" path="data/$(date)/User$(userid)_movella.csv" type="1" delim=",">
+			<input pin="movella_data" frame="0.1s"/>
 		</consumer>
-	
+
+		<gate open="$(tamago)">
+			<consumer create="WavWriter:recordaudiotamago" path="data/$(date)/User$(userid)_tamago.wav">
+				<input pin="audio" frame="512"/>
+			</consumer>
+		</gate>
+
 		<consumer create="WavWriter:recordaudioclose" path="data/$(date)/User$(userid)_close.wav">
 			<input pin="audioclosetalk" frame="512"/>
 		</consumer>
@@ -144,8 +143,6 @@
 		</gate>
 		
 	</gate>
-	
-	<!-- receive data -->
 	
 	<gate open="$(portrait)">
 		<sensor create="FFMPEGReader:receivevideo" url="udp://$(ip):$(portvideo)" fps="$(sr)" width="480" height="720" stream="true">		
@@ -162,8 +159,10 @@
 	<sensor create="FFMPEGReader:receiveaudio" url="udp://$(ip):$(portaudio)" asr="48000.0" stream="true">		
 		<output channel="audio" pin="raudio" size="2.0s"/>
 	</sensor>
-	
-	<!-- stream to big brother -->
+
+	<sensor create="FFMPEGReader:receivegopro" url="udp://10.5.5.9:8554" fps="$(sr)" stream="true">		
+		<output channel="video" pin="gopro_video" size="$(buffersize)s"/>
+	</sensor>
 	
 	<gate open="$(bigbrother)">
 	
@@ -178,20 +177,16 @@
 		</gate>
 
 		<gate close="$(closetalk)">
-			<consumer create="FFMPEGWriter:sendaudiobb" url="udp://$(ipbb):$(portaudiobb)" format="mpegts" stream="true">
+			<consumer create="FFMPEGWriter:sendaudiobb" url="udp://$(ipbb):$(portaudiobb)" format="mpegts" stream="true" acodec="mp2">
 				<input pin="audiomono" frame="0.0333s" />
 			</consumer>
 		</gate>
 	
 	</gate>
 	
-	<!-- audio player -->	
-	
 	<consumer create="AudioPlayer:audioplayer" option="options/speaker">
 		<input pin="raudio" frame="0.1s"/>
 	</consumer>
-	
-	<!-- visualization -->	
 	
 	<consumer create="VideoPainter:rplot" title="" flip="false">
 		<input pin="rvideo" frame="1" delta="0"/>
@@ -205,35 +200,55 @@
 		<input pin="resize" frame="1" delta="0"/>
 	</consumer> 
 	
-	<transformer create="SkeletonPainter:skelpaint">
-		<input pin="skelconv" frame="1"/>
-		<output pin="skelpaint"/>
-	</transformer> 
-
-	<consumer create="VideoPainter:plot" title="SKELETON" flip="false">
-		<input pin="skelpaint" frame="1"/>
+	<consumer create="VideoPainter:plot_depth" title="ZED Depth" flip="false">
+		<input pin="depth" frame="1" delta="0"/>
 	</consumer>
 
-	<gate close="$(closetalk)">
-		<consumer create="SignalPainter:plot" title="AUDIO (TAMAGO array)" size="10" type="2">
+	<consumer create="SignalPainter:plot_imu" title="ZED IMU Data (6 dims)" size="10.0">
+		<input pin="imu" frame="1"/>
+	</consumer>
+
+	<consumer create="SignalPainter:plot_skel" title="ZED Skeleton 3D (102 dims)" size="10.0">
+		<input pin="skel" frame="1"/>
+	</consumer>
+
+	<consumer create="SignalPainter:plot_gopro" title="GoPro State" size="10.0">
+		<input pin="gopro_state" frame="1"/>
+	</consumer>
+
+	<consumer create="VideoPainter:plot_gopro_video" title="GoPro Live Preview" flip="false">
+		<input pin="gopro_video" frame="1" delta="0"/>
+	</consumer>
+
+	<consumer create="SignalPainter:plot_movella" title="Movella DOT 9-ch Data" size="10.0" type="2">
+		<input pin="movella_data" frame="0.1s"/>
+	</consumer>
+
+	<gate open="$(tamago)">
+		<consumer create="SignalPainter:plot_tamago" title="AUDIO (TAMAGO 8ch)" size="10" type="2">
 			<input pin="audio" frame="0.0333s"/>
 		</consumer>
 	</gate>
 
 	<gate open="$(closetalk)">
-		<consumer create="SignalPainter:plot" title="AUDIO (close talk)" size="10" type="2">
+		<consumer create="SignalPainter:plot_close" title="AUDIO (close talk)" size="10" type="2">
 			<input pin="audioclosetalk" frame="0.0333s"/>
 		</consumer>
 	</gate>
 
-	<!-- decoration -->	
-	
 	<gate open="$(portrait)">
 		<object create="Decorator" icon="true" title="Pipeline">
 			<area pos="0,0,400,600">console</area>
 			<area pos="400,0,320,1000" nh="1">plot*</area>
 			<area pos="720,0,480,720">cplot*</area>			
-			<area pos="2320,0,480,720">rplot*</area>	
+			<area pos="2320,0,480,720">rplot*</area>
+			<area pos="1200,0,480,480">plot_depth</area>
+			<area pos="1200,480,480,240">plot_imu</area>
+			<area pos="1200,720,480,240">plot_movella</area>
+			<area pos="1680,480,480,240">plot_skel</area>
+			<area pos="1680,720,480,240">plot_gopro</area>
+			<area pos="1680,0,480,480">plot_gopro_video</area>
+			<area pos="2160,480,480,480">plot_tamago</area>
 		</object>
 	</gate>	
 	
@@ -242,7 +257,14 @@
 			<area pos="0,0,400,600">console</area>
 			<area pos="400,0,320,480">plot*</area>	
 			<area pos="720,0,640,480">rplot*</area>	
+			<area pos="400,480,480,360">plot_depth</area>
+			<area pos="880,480,480,360">plot_imu</area>
+			<area pos="1360,480,480,360">plot_skel</area>
+			<area pos="1840,480,320,360">plot_gopro</area>
+			<area pos="1360,0,640,480">plot_gopro_video</area>
+			<area pos="2000,0,480,480">plot_movella</area>
+			<area pos="2480,0,600,840">plot_tamago</area>
 		</object>
-	</gate>	
+	</gate>
 	
 </pipeline>

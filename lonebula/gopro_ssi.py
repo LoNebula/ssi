@@ -30,13 +30,15 @@ def trigger_gopro(action):
         print(f"Error {action} GoPro: {e}")
 
 def delayed_start():
-    # 3秒経過した瞬間に裏でGoProを起動する
-    print(">>> [SSI] Pipeline Streaming: Starting GoPro NOW...")
+    print(">>> [SSI] Pipeline Streaming: Starting GoPro Record NOW...")
     trigger_gopro("start")
 
 def connect(opts, vars):
-    print(">>> [SSI] Pipeline Connected: Waiting 3 seconds for SSI countdown...")
-    # SSIの「3秒カウントダウン」に合わせて、3.0秒後に delayed_start を実行するタイマーをセット
+    print(">>> [SSI] Pipeline Connected: Requesting Live Stream...")
+    # SSI起動と同時に、まずプレビュー映像の配信を開始させる
+    trigger_gopro("stream_start")
+    
+    # 3秒カウントダウン後に録画を開始するタイマー
     timer = threading.Timer(3.0, delayed_start)
     timer.start()
     
@@ -50,4 +52,6 @@ def read(name, sout, reset, board, opts, vars):
 
 def disconnect(opts, vars):
     print(">>> [SSI] Pipeline Disconnected: Stopping GoPro...")
+    # 録画とストリームの両方を停止
     trigger_gopro("stop")
+    trigger_gopro("stream_stop")

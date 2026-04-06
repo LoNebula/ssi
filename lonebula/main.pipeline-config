@@ -21,5 +21,8 @@ ipbb = 137.194.232.180 # ip of the computer that supervises the recording
 portvideobb = 2222 # big brother video port
 portaudiobb = 3333 # big brother audio port
 
+tamago = 0
+closetalk = 1
+
 
 
