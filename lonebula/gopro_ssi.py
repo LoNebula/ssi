@@ -29,22 +29,25 @@ def trigger_gopro(action):
     except Exception as e:
         print(f"Error {action} GoPro: {e}")
 
-def delayed_start():
-    print(">>> [SSI] Pipeline Streaming: Starting GoPro Record NOW...")
-    trigger_gopro("start")
-
 def connect(opts, vars):
     print(">>> [SSI] Pipeline Connected: Requesting Live Stream...")
-    # SSI起動と同時に、まずプレビュー映像の配信を開始させる
+    # プレビュー映像の配信だけは先に開始させておく
     trigger_gopro("stream_start")
     
-    # 3秒カウントダウン後に録画を開始するタイマー
-    timer = threading.Timer(3.0, delayed_start)
-    timer.start()
-    
+    vars['has_started'] = False
+    vars['read_count'] = 0
     vars['dummy_val'] = 1.0
 
 def read(name, sout, reset, board, opts, vars):
+    # 【重要】SSI本体のデータ取得ループが回り始めたら録画を開始
+    if not vars['has_started']:
+        vars['read_count'] += 1
+        # 最初の初期化アクセスを飛ばし、完全にパイプラインが動いた直後（約1秒後）にキックする
+        if vars['read_count'] >= 2:
+            print(">>> [SSI] Pipeline Running: Starting GoPro Record NOW...")
+            threading.Thread(target=trigger_gopro, args=("start",)).start()
+            vars['has_started'] = True
+
     if name == 'state':
         val = vars['dummy_val']
         for n in range(sout.num):

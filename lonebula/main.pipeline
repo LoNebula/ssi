@@ -14,7 +14,11 @@
 		<load name="ssipython310"/>
 	</register>
 	
+	<!-- set framework options -->	
+
 	<framework console="true" sync="true" slisten="$(waitforsignal)" sport="6666"/> 
+
+	<!-- camera sensor -->
 
 	<sensor create="ZedCamera:zed">
 		<output channel="zed_rgb" pin="video" size="$(buffersize)s"/>
@@ -36,7 +40,7 @@
 			<output channel="audio" pin="audio" size="2.0s"/>
 		</sensor>
 
-		<transformer create="Selector:audiotamago_mono" select="0">
+		<transformer create="Selector:audiotamago_mono" indices="0">
 			<input pin="audio" frame="512"/>
 			<output pin="audiomono"/>
 		</transformer>
@@ -47,6 +51,8 @@
 			<output channel="audio" pin="audioclosetalk"/>
 		</sensor>
 	</gate>
+
+	<!-- resize -->
 	
 	<gate open="$(portrait)">	
 		<transformer create="CVCrop:cropvideo" scaled="false" region="830,280,480,720">
@@ -61,6 +67,8 @@
 			<output pin="resize"/>
 		</transformer>
 	 </gate>
+
+	<!--stream -->
 	
 	<consumer create="FFMPEGWriter:sendvideo" url="udp://$(ip):$(portvideo)" format="mpegts" stream="true">
 		<input pin="resize" frame="1" />
@@ -77,7 +85,9 @@
 			<input pin="audiomono" frame="0.0333s" />
 		</consumer>
 	</gate>
-	
+		
+	<!-- store data -->
+
 	<gate open="$(record)">	
 	
 		<execute name="mkdir.bat" args="data\$(date)" type="pre" wait="-1"/>
@@ -125,6 +135,8 @@
 		</gate>
 		
 	</gate>
+
+	<!-- receive data -->
 	
 	<gate open="$(portrait)">
 		<sensor create="FFMPEGReader:receivevideo" url="udp://$(ip):$(portvideo)" fps="$(sr)" width="480" height="720" stream="true">		
@@ -153,6 +165,8 @@
 	<sensor create="FFMPEGReader:receivegopro" url="udp://10.5.5.9:8554" fps="$(sr)" stream="true">		
 		<output channel="video" pin="gopro_video" size="$(buffersize)s"/>
 	</sensor>
+
+	<!-- stream to big brother -->
 	
 	<gate open="$(bigbrother)">
 	
@@ -173,6 +187,8 @@
 		</gate>
 	
 	</gate>
+
+	<!-- audio player -->	
 	
 	<gate open="$(closetalk)">
 		<consumer create="AudioPlayer:audioplayer_close" option="options/speaker">
@@ -185,6 +201,8 @@
 			<input pin="raudio_tamago" frame="0.1s"/>
 		</consumer>
 	</gate>
+
+	<!-- visualization -->	
 	
 	<consumer create="VideoPainter:rplot" title="" flip="false">
 		<input pin="rvideo" frame="1" delta="0"/>
@@ -223,7 +241,7 @@
 	</consumer>
 
 	<gate open="$(tamago)">
-		<consumer create="SignalPainter:plot_tamago" title="AUDIO (TAMAGO 8ch)" size="10" type="2">
+		<consumer create="SignalPainter:plot_tamago" title="AUDIO (TAMAGO 8ch)" size="2.0" type="2">
 			<input pin="audio" frame="0.0333s"/>
 		</consumer>
 	</gate>
@@ -233,6 +251,8 @@
 			<input pin="audioclosetalk" frame="0.0333s"/>
 		</consumer>
 	</gate>
+
+	<!-- decoration -->	
 
 	<gate open="$(portrait)">
 		<object create="Decorator" icon="true" title="Pipeline">

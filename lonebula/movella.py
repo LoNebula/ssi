@@ -25,7 +25,6 @@ def enqueue_output(out, q):
         if not line_str:
             continue
         try:
-            # 9つの数値データならキューへ、それ以外のテキスト(DEBUG等)ならコンソールへ
             vals = [float(x) for x in line_str.split(',')]
             if len(vals) == 9:
                 q.put(vals)
@@ -57,9 +56,21 @@ def connect(opts, vars):
     t.daemon = True
     t.start()
     
+    print(">>> [SSI] Waiting for Movella hardware scan to complete. This may take up to 20 seconds...")
+    
+    try:
+        # 【重要】最初のデータパケットが来るまでSSIの進行をブロック（最大60秒待機）
+        first_data = q.get(block=True, timeout=60.0)
+    except queue.Empty:
+        print("[Movella Error] Timeout waiting for Movella to start streaming.")
+        proc.terminate()
+        return False
+    
+    print(">>> [SSI] Movella is fully connected and streaming!")
+    
     vars['proc'] = proc
     vars['queue'] = q
-    vars['last_data'] = [0.0] * 9
+    vars['last_data'] = first_data
     return True
 
 def read(name, sout, reset, board, opts, vars):
