@@ -16,7 +16,7 @@
 	<!-- audio sensors: TAMAGO mic array only -->
 	<!-- mono downmix of TAMAGO array (channel 0) for streaming -->
 
-	<sensor create="Audio:audiotamago" option="options/audiotamago" scale="true" sr="48000" blockInSamples="0.01" channels="8">
+	<sensor create="Audio:audiotamago" option="options/audiotamago" scale="true" sr="48000" blockInSamples="0.01" channels="4">
 		<output channel="audio" pin="audio" size="2.0s"/>
 	</sensor>
 

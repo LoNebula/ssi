@@ -14,11 +14,7 @@
 		<load name="ssipython310"/>
 	</register>
 	
-	<!-- set framework options -->	
-
-	<framework console="true" sync="true" slisten="$(waitforsignal)" sport="6666"/> 
-
-	<!-- camera sensor -->
+	<framework console="true" sync="true" slisten="$(waitforsignal)" sport="6666" watch="0.0"/> 
 
 	<sensor create="ZedCamera:zed">
 		<output channel="zed_rgb" pin="video" size="$(buffersize)s"/>
@@ -51,8 +47,6 @@
 			<output channel="audio" pin="audioclosetalk"/>
 		</sensor>
 	</gate>
-
-	<!-- resize -->
 	
 	<gate open="$(portrait)">	
 		<transformer create="CVCrop:cropvideo" scaled="false" region="830,280,480,720">
@@ -68,8 +62,6 @@
 		</transformer>
 	 </gate>
 
-	<!--stream -->
-	
 	<consumer create="FFMPEGWriter:sendvideo" url="udp://$(ip):$(portvideo)" format="mpegts" stream="true">
 		<input pin="resize" frame="1" />
 	</consumer>
@@ -81,15 +73,12 @@
 	</gate>
 
 	<gate open="$(tamago)">
-		<consumer create="FFMPEGWriter:sendaudio_tamago" url="udp://$(ip):3334" format="mpegts" stream="true" acodec="mp2">
+		<consumer create="FFMPEGWriter:sendaudio_tamago" url="udp://$(ip):3334" format="mpegts" stream="true">
 			<input pin="audiomono" frame="0.0333s" />
 		</consumer>
 	</gate>
 		
-	<!-- store data -->
-
 	<gate open="$(record)">	
-	
 		<execute name="mkdir.bat" args="data\$(date)" type="pre" wait="-1"/>
 	
 		<gate open="$(ffmpeg)">
@@ -103,6 +92,10 @@
 				<input pin="video" frame="1" delta="0"/>
 			</consumer>	
 		</gate>
+
+		<consumer create="FileWriter:recordsync" path="data/$(date)/User$(userid)_sync_marker.csv" type="1" delim=",">
+			<input pin="gopro_state" frame="1.0s"/>
+		</consumer>
 
 		<consumer create="FileWriter:recordskel" path="data/$(date)/User$(userid)_skel.csv" type="1" delim=",">
 			<input pin="skel" frame="1.0s"/>
@@ -133,11 +126,8 @@
 				<input pin="depth" frame="1.0s"/>
 			</consumer> 
 		</gate>
-		
 	</gate>
 
-	<!-- receive data -->
-	
 	<gate open="$(portrait)">
 		<sensor create="FFMPEGReader:receivevideo" url="udp://$(ip):$(portvideo)" fps="$(sr)" width="480" height="720" stream="true">		
 			<output channel="video" pin="rvideo" size="2.0s"/>
@@ -166,10 +156,7 @@
 		<output channel="video" pin="gopro_video" size="$(buffersize)s"/>
 	</sensor>
 
-	<!-- stream to big brother -->
-	
 	<gate open="$(bigbrother)">
-	
 		<consumer create="FFMPEGWriter:sendvideobb" url="udp://$(ipbb):$(portvideobb)" format="mpegts" stream="true">
 			<input pin="resize" frame="1" />
 		</consumer>	
@@ -181,15 +168,12 @@
 		</gate>
 
 		<gate open="$(tamago)">
-			<consumer create="FFMPEGWriter:sendaudiobb_tamago" url="udp://$(ipbb):3335" format="mpegts" stream="true" acodec="mp2">
+			<consumer create="FFMPEGWriter:sendaudiobb_tamago" url="udp://$(ipbb):3335" format="mpegts" stream="true">
 				<input pin="audiomono" frame="0.0333s" />
 			</consumer>
 		</gate>
-	
 	</gate>
 
-	<!-- audio player -->	
-	
 	<gate open="$(closetalk)">
 		<consumer create="AudioPlayer:audioplayer_close" option="options/speaker">
 			<input pin="raudio_close" frame="0.1s"/>
@@ -202,8 +186,6 @@
 		</consumer>
 	</gate>
 
-	<!-- visualization -->	
-	
 	<consumer create="VideoPainter:rplot" title="" flip="false">
 		<input pin="rvideo" frame="1" delta="0"/>
 	</consumer>
@@ -252,8 +234,6 @@
 		</consumer>
 	</gate>
 
-	<!-- decoration -->	
-
 	<gate open="$(portrait)">
 		<object create="Decorator" icon="true" title="Pipeline">
 			<area pos="0,0,400,600">console</area>
@@ -286,5 +266,4 @@
 			<area pos="2480,420,600,420">plot_tamago</area>
 		</object>
 	</gate>
-	
 </pipeline>

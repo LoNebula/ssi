@@ -16,4 +16,4 @@ echo ENV: %CONDA_PREFIX%
 echo --------------------------------------------------
 
 cd /d C:\ssi\lonebula
-C:\ssi\bin\x64\vc140\xmlpipe.exe C:\ssi\lonebula\main.pipeline
+C:\ssi\bin\x64\vc140\xmlpipe.exe C:\ssi\lonebula\onlytamago.pipeline -config C:\ssi\lonebula\main.pipeline-config

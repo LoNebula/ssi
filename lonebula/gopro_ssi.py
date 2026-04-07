@@ -1,6 +1,6 @@
 import subprocess
 import os
-import threading
+import time
 
 PYTHON_EXE = r"C:\Users\shogo\anaconda3\envs\gopro\python.exe"
 SCRIPT_PATH = r"C:\ssi\lonebula\gopro_action.py"
@@ -16,45 +16,43 @@ def initChannel(name, channel, types, opts, vars):
         channel.dim = 1
         channel.type = types.FLOAT
         channel.sr = 1.0 
-    else:
+    else: 
         print('unknown channel name')
 
 def trigger_gopro(action):
     clean_env = os.environ.copy()
     clean_env.pop("PYTHONHOME", None)
     clean_env.pop("PYTHONPATH", None)
-    
     try:
-        subprocess.run([PYTHON_EXE, SCRIPT_PATH, action], env=clean_env)
+        # SSIのメインスレッドをブロックしないよう、run()ではなくPopen()を使用
+        subprocess.Popen([PYTHON_EXE, SCRIPT_PATH, action], env=clean_env)
     except Exception as e:
         print(f"Error {action} GoPro: {e}")
 
 def connect(opts, vars):
-    print(">>> [SSI] Pipeline Connected: Requesting Live Stream...")
-    # プレビュー映像の配信だけは先に開始させておく
+    print(">>> [SSI] WARM-UP PHASE: Pipeline connected. Waiting 30 seconds...")
     trigger_gopro("stream_start")
-    
+    vars['start_time'] = time.time()
     vars['has_started'] = False
-    vars['read_count'] = 0
-    vars['dummy_val'] = 1.0
+    vars['state_val'] = 0.0  # ウォームアップ中は0を出力
 
 def read(name, sout, reset, board, opts, vars):
-    # 【重要】SSI本体のデータ取得ループが回り始めたら録画を開始
+    # 1. 状態の更新とトリガー発行
     if not vars['has_started']:
-        vars['read_count'] += 1
-        # 最初の初期化アクセスを飛ばし、完全にパイプラインが動いた直後（約1秒後）にキックする
-        if vars['read_count'] >= 2:
-            print(">>> [SSI] Pipeline Running: Starting GoPro Record NOW...")
-            threading.Thread(target=trigger_gopro, args=("start",)).start()
-            vars['has_started'] = True
-
-    if name == 'state':
-        val = vars['dummy_val']
-        for n in range(sout.num):
-            sout[n] = val
+        elapsed = time.time() - vars['start_time']
+        if elapsed >= 30.0:
+            print("\n" + "="*60)
+            print(">>> [SSI] 1 MINUTE ELAPSED: PRODUCTION START! Triggering GoPro...")
+            trigger_gopro("start")       # GoProの録画を開始
+            vars['has_started'] = True   # 無限ループを防止
+            vars['state_val'] = 1.0      # 録画中は1を出力
+            
+    # 2. 【超重要】SSIのバッファ(sout)を必ず埋める
+    for i in range(sout.num):
+        sout[i, 0] = vars['state_val']
 
 def disconnect(opts, vars):
-    print(">>> [SSI] Pipeline Disconnected: Stopping GoPro...")
-    # 録画とストリームの両方を停止
+    # SSI終了時に自動でGoProの録画とストリームを停止
+    print(">>> [SSI] Stopping GoPro...")
     trigger_gopro("stop")
     trigger_gopro("stream_stop")
