@@ -8,7 +8,7 @@ waitforsignal = False # $(bool) wait for signal. true on machine that runs first
 portrait = false # $(bool) enable if screen is in portrait mode
 record = true # $(bool) enable/diable recording
 ffmpeg = false # $(bool) use ffmpeg for video compression
-buffersize = 10.0 # buffer size — increased from 2.0 to absorb ZED ~2s startup lag
+buffersize = 30.0 # buffer size — increased from 2.0 to absorb ZED ~2s startup lag
 
 sr = 30.0 # screenrate of zed default = 30.0)
 compression = 0 # $(select{0,1,2}) set compresion for depth data [0=binary, 1=ascii 2=compressed ~25%]

@@ -62,11 +62,15 @@ def read(name, sout, reset, board, opts, vars):
     q = vars['queue']
     last_data = vars['last_data']
     
+    # キューから最新の1つだけを取る、あるいは一定数で切り上げる
     got_new = False
-    while not q.empty():
+    max_pull = 10 # 1回の呼び出しで処理する最大フレーム数
+    count = 0
+    while not q.empty() and count < max_pull:
         try:
             last_data = q.get_nowait()
             got_new = True
+            count += 1
         except queue.Empty: break
             
     if got_new and not vars['is_ready']:
@@ -75,7 +79,7 @@ def read(name, sout, reset, board, opts, vars):
         
     vars['last_data'] = last_data
     
-    # スキャン完了までは0が流れるため、SSIは止まらずに稼働し続ける
+    # sout.num (SSIが要求しているフレーム数) 分を埋める
     for i in range(sout.num):
         for d in range(9):
             sout[i, d] = last_data[d]
