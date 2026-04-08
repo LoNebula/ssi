@@ -62,20 +62,22 @@
 		</transformer>
 	 </gate>
 
-	<consumer create="FFMPEGWriter:sendvideo" url="udp://$(ip):$(portvideo)" format="mpegts" stream="true">
-		<input pin="resize" frame="1" />
-	</consumer>
-
-	<gate open="$(closetalk)">
-		<consumer create="FFMPEGWriter:sendaudio_close" url="udp://$(ip):$(portaudio)" format="mpegts" stream="true">
-			<input pin="audioclosetalk" frame="0.0333s" />
+	<gate close="$(offlinemode)">
+		<consumer create="FFMPEGWriter:sendvideo" url="udp://$(ip):$(portvideo)" format="mpegts" stream="true">
+			<input pin="resize" frame="1" />
 		</consumer>
-	</gate>
 
-	<gate open="$(tamago)">
-		<consumer create="FFMPEGWriter:sendaudio_tamago" url="udp://$(ip):3334" format="mpegts" stream="true">
-			<input pin="audiomono" frame="0.0333s" />
-		</consumer>
+		<gate open="$(closetalk)">
+			<consumer create="FFMPEGWriter:sendaudio_close" url="udp://$(ip):$(portaudio)" format="mpegts" stream="true">
+				<input pin="audioclosetalk" frame="0.0333s" />
+			</consumer>
+		</gate>
+
+		<gate open="$(tamago)">
+			<consumer create="FFMPEGWriter:sendaudio_tamago" url="udp://$(ip):3334" format="mpegts" stream="true">
+				<input pin="audiomono" frame="0.0333s" />
+			</consumer>
+		</gate>
 	</gate>
 		
 	<gate open="$(record)">	
@@ -128,76 +130,86 @@
 		</gate>
 	</gate>
 
-	<gate open="$(portrait)">
-		<sensor create="FFMPEGReader:receivevideo" url="udp://$(ip):$(portvideo)" fps="$(sr)" width="480" height="720" stream="true">		
-			<output channel="video" pin="rvideo" size="2.0s"/>
-		</sensor>
-	</gate>
-	
-	<gate close="$(portrait)">
-		<sensor create="FFMPEGReader:receivevideo" url="udp://$(ip):$(portvideo)" fps="$(sr)" width="640" height="480" stream="true">		
-			<output channel="video" pin="rvideo" size="2.0s"/>
-		</sensor>
-	</gate>
-	
-	<gate open="$(closetalk)">
-		<sensor create="FFMPEGReader:receiveaudio_close" url="udp://$(ip):$(portaudio)" asr="48000.0" stream="true">		
-			<output channel="audio" pin="raudio_close" size="2.0s"/>
-		</sensor>
-	</gate>
 
-	<gate open="$(tamago)">
-		<sensor create="FFMPEGReader:receiveaudio_tamago" url="udp://$(ip):3334" asr="48000.0" stream="true">		
-			<output channel="audio" pin="raudio_tamago" size="2.0s"/>
-		</sensor>
+	<gate close="$(offlinemode)">
+		<gate open="$(portrait)">
+			<sensor create="FFMPEGReader:receivevideo" url="udp://$(ip):$(portvideo)" fps="$(sr)" width="480" height="720" stream="true">		
+				<output channel="video" pin="rvideo" size="2.0s"/>
+			</sensor>
+		</gate>
+		
+		<gate close="$(portrait)">
+			<sensor create="FFMPEGReader:receivevideo" url="udp://$(ip):$(portvideo)" fps="$(sr)" width="640" height="480" stream="true">		
+				<output channel="video" pin="rvideo" size="2.0s"/>
+			</sensor>
+		</gate>
+	
+	
+		<gate open="$(closetalk)">
+			<sensor create="FFMPEGReader:receiveaudio_close" url="udp://$(ip):$(portaudio)" asr="48000.0" stream="true">		
+				<output channel="audio" pin="raudio_close" size="2.0s"/>
+			</sensor>
+		</gate>
+
+		<gate open="$(tamago)">
+			<sensor create="FFMPEGReader:receiveaudio_tamago" url="udp://$(ip):3334" asr="48000.0" stream="true">		
+				<output channel="audio" pin="raudio_tamago" size="2.0s"/>
+			</sensor>
+		</gate>	
 	</gate>
 
 	<sensor create="FFMPEGReader:receivegopro" url="udp://10.5.5.9:8554" fps="$(sr)" stream="true">		
 		<output channel="video" pin="gopro_video" size="$(buffersize)s"/>
 	</sensor>
 
-	<gate open="$(bigbrother)">
-		<consumer create="FFMPEGWriter:sendvideobb" url="udp://$(ipbb):$(portvideobb)" format="mpegts" stream="true">
-			<input pin="resize" frame="1" />
-		</consumer>	
-		
-		<gate open="$(closetalk)">	
-			<consumer create="FFMPEGWriter:sendaudiobb_close" url="udp://$(ipbb):$(portaudiobb)" format="mpegts" stream="true">
-				<input pin="audioclosetalk" frame="0.0333s" />
-			</consumer>		
+	<gate close="$(offlinemode)">
+		<gate open="$(bigbrother)">
+			<consumer create="FFMPEGWriter:sendvideobb" url="udp://$(ipbb):$(portvideobb)" format="mpegts" stream="true">
+				<input pin="resize" frame="1" />
+			</consumer>
+
+			<gate open="$(closetalk)">
+				<consumer create="FFMPEGWriter:sendaudiobb_close" url="udp://$(ipbb):$(portaudiobb)" format="mpegts" stream="true">
+					<input pin="audioclosetalk" frame="0.0333s" />
+				</consumer>
+			</gate>
+
+			<gate open="$(tamago)">
+				<consumer create="FFMPEGWriter:sendaudiobb_tamago" url="udp://$(ipbb):3335" format="mpegts" stream="true">
+					<input pin="audiomono" frame="0.0333s" />
+				</consumer>
+			</gate>
+		</gate>
+	</gate>
+
+	<gate close="$(offlinemode)">
+		<gate open="$(closetalk)">
+			<consumer create="AudioPlayer:audioplayer_close" option="options/speaker">
+				<input pin="raudio_close" frame="0.1s"/>
+			</consumer>
 		</gate>
 
 		<gate open="$(tamago)">
-			<consumer create="FFMPEGWriter:sendaudiobb_tamago" url="udp://$(ipbb):3335" format="mpegts" stream="true">
-				<input pin="audiomono" frame="0.0333s" />
+			<consumer create="AudioPlayer:audioplayer_tamago" option="options/speaker">
+				<input pin="raudio_tamago" frame="0.1s"/>
 			</consumer>
 		</gate>
 	</gate>
 
-	<gate open="$(closetalk)">
-		<consumer create="AudioPlayer:audioplayer_close" option="options/speaker">
-			<input pin="raudio_close" frame="0.1s"/>
+	<gate close="$(offlinemode)">
+		<consumer create="VideoPainter:rplot" title="" flip="false">
+			<input pin="rvideo" frame="1" delta="0"/>
 		</consumer>
 	</gate>
 
-	<gate open="$(tamago)">
-		<consumer create="AudioPlayer:audioplayer_tamago" option="options/speaker">
-			<input pin="raudio_tamago" frame="0.1s"/>
-		</consumer>
-	</gate>
-
-	<consumer create="VideoPainter:rplot" title="" flip="false">
-		<input pin="rvideo" frame="1" delta="0"/>
-	</consumer>
-	
-	<consumer create="VideoPainter:plot" title="VIDEO (raw)" flip="false">
+	<consumer create="VideoPainter:plot" title="VIDEO" flip="false">
 		<input pin="video" frame="1" delta="0"/>
 	</consumer>
-	
-	<consumer create="VideoPainter:cplot" title="VIDEO (cropped)" flip="false">
-		<input pin="resize" frame="1" delta="0"/>
-	</consumer> 
-	
+	<gate open="$(crop)">
+		<consumer create="VideoPainter:cplot" title="VIDEO (cropped)" flip="false">
+			<input pin="resize" frame="1" delta="0"/>
+		</consumer> 
+	</gate>
 	<consumer create="VideoPainter:plot_depth" title="ZED Depth" flip="false">
 		<input pin="depth" frame="1" delta="0"/>
 	</consumer>
@@ -237,7 +249,7 @@
 	<gate open="$(portrait)">
 		<object create="Decorator" icon="true" title="Pipeline">
 			<area pos="0,0,400,600">console</area>
-			<area pos="400,0,320,1000" nh="1">plot*</area>
+			<area pos="400,0,320,1000">plot*</area>
 			<area pos="720,0,480,720">cplot*</area>			
 			<area pos="2320,0,480,720">rplot*</area>
 			<area pos="1200,0,480,480">plot_depth</area>
@@ -254,7 +266,7 @@
 	<gate close="$(portrait)">
 		<object create="Decorator" icon="true" title="Pipeline">
 			<area pos="0,0,400,600">console</area>
-			<area pos="400,0,320,480">plot*</area>	
+			<area pos="400,0,640,480">plot</area>	
 			<area pos="720,0,640,480">rplot*</area>	
 			<area pos="400,480,480,360">plot_depth</area>
 			<area pos="880,480,480,360">plot_imu</area>
