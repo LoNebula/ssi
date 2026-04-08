@@ -31,6 +31,10 @@
 		<output channel="sensor" pin="movella_data" />
 	</sensor>
 
+	<sensor create="FFMPEGReader:receivegopro" url="udp://@0.0.0.0:8554" fps="$(sr)" stream="true">	
+		<output channel="video" pin="gopro_video" size="$(buffersize)s"/>
+	</sensor>
+
 	<gate open="$(tamago)">
 		<sensor create="Audio:audiotamago" option="options/audiotamago" scale="true" sr="48000" blockInSamples="0.01" channels="8">
 			<output channel="audio" pin="audio" size="2.0s"/>
@@ -95,6 +99,18 @@
 			</consumer>	
 		</gate>
 
+		<gate open="$(ffmpeg)">
+			<consumer create="FFMPEGWriter:recordgopro_mp4" url="data/$(date)/User$(userid)_gopro.mp4">
+				<input pin="gopro_video" frame="1" />
+			</consumer>
+		</gate>
+		
+		<gate close="$(ffmpeg)">
+			<consumer create="CameraWriter:recordgopro_avi" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_gopro.avi">
+				<input pin="gopro_video" frame="1" delta="0"/>
+			</consumer>	
+		</gate>
+
 		<consumer create="FileWriter:recordsync" path="data/$(date)/User$(userid)_sync_marker.csv" type="1" delim=",">
 			<input pin="gopro_state" frame="1.0s"/>
 		</consumer>
@@ -128,18 +144,6 @@
 				<input pin="depth" frame="1.0s"/>
 			</consumer> 
 		</gate>
-
-		<gate open="$(ffmpeg)">
-			<consumer create="FFMPEGWriter:recordgopro_mp4" url="data/$(date)/User$(userid)_gopro.mp4">
-				<input pin="gopro_video" frame="1" />
-			</consumer>
-		</gate>
-		
-		<gate close="$(ffmpeg)">
-			<consumer create="CameraWriter:recordgopro_avi" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_gopro.avi">
-				<input pin="gopro_video" frame="1" delta="0"/>
-			</consumer>	
-		</gate>
 	</gate>
 
 
@@ -169,10 +173,6 @@
 			</sensor>
 		</gate>	
 	</gate>
-
-	<sensor create="FFMPEGReader:receivegopro" url="udp://@0.0.0.0:8554" fps="$(sr)" stream="true">	
-		<output channel="video" pin="gopro_video" size="$(buffersize)s"/>
-	</sensor>
 
 	<gate close="$(offlinemode)">
 		<gate open="$(bigbrother)">
