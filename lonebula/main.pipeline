@@ -259,35 +259,36 @@
 	</gate>
 
 	<gate open="$(portrait)">
-		<object create="Decorator" icon="true" title="Pipeline">
-			<area pos="0,0,400,600">console</area>
-			<area pos="400,0,320,1000">plot*</area>
-			<area pos="720,0,480,720">cplot*</area>			
-			<area pos="2320,0,480,720">rplot*</area>
-			<area pos="1200,0,480,480">plot_depth</area>
-			<area pos="1200,480,480,240">plot_imu</area>
-			<area pos="1200,720,480,240">plot_movella</area>
-			<area pos="1680,480,480,240">plot_skel</area>
-			<area pos="1680,720,480,240">plot_gopro</area>
-			<area pos="1680,0,480,480">plot_gopro_video</area>
-			<area pos="2160,0,480,480">plot_close</area>
-			<area pos="2160,480,480,480">plot_tamago</area>
+		<object create="Decorator" icon="true" title="Vertical Monitoring">
+			<area pos="0,0,540,400">plot</area>
+			<area pos="540,0,540,400">plot_gopro_video</area>
+			
+			<area pos="0,400,1080,400">plot_skel</area>
+			
+			<area pos="0,800,360,300">plot_depth</area>
+			<area pos="360,800,360,300">plot_imu</area>
+			<area pos="720,800,360,300">plot_movella</area>
+			
+			<area pos="0,1100,400,820">console</area>
+			<area pos="400,1100,340,300">plot_close</area>
+			<area pos="740,1100,340,300">plot_tamago</area>
+			<area pos="400,1400,680,100">plot_gopro</area>
 		</object>
-	</gate>	
+	</gate>
 	
 	<gate close="$(portrait)">
-		<object create="Decorator" icon="true" title="Pipeline">
-			<area pos="0,0,400,600">console</area>
-			<area pos="400,0,640,480">plot</area>	
-			<area pos="720,0,640,480">rplot*</area>	
-			<area pos="400,480,480,360">plot_depth</area>
-			<area pos="880,480,480,360">plot_imu</area>
-			<area pos="1360,480,480,360">plot_skel</area>
-			<area pos="1840,480,320,360">plot_gopro</area>
-			<area pos="1360,0,640,480">plot_gopro_video</area>
-			<area pos="2000,0,480,480">plot_movella</area>
-			<area pos="2480,0,600,420">plot_close</area>
-			<area pos="2480,420,600,420">plot_tamago</area>
+		<object create="Decorator" icon="true" title="Multimodal Monitoring">
+			<area pos="0,0,300,1000">console</area>
+			
+			<area pos="300,0,540,400">plot</area>             
+			<area pos="840,0,540,400">plot_gopro_video</area>  
+			<area pos="1380,0,540,400">plot_depth</area>      
+			<area pos="300,400,810,300">plot_skel</area>       
+			<area pos="1110,400,810,300">plot_imu</area>        
+			<area pos="300,700,540,300">plot_movella</area>    
+			<area pos="840,700,540,300">plot_tamago</area>     
+			<area pos="1380,700,540,150">plot_close</area>      
+			<area pos="1380,850,540,150">plot_gopro</area>     
 		</object>
 	</gate>
 </pipeline>
