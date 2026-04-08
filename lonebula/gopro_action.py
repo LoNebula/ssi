@@ -1,5 +1,6 @@
 import requests
 import sys
+import time
 
 BASE = "http://10.5.5.9:8080/gopro/camera"
 
@@ -19,6 +20,11 @@ def do_action(action):
             # プレビュー映像配信を停止
             r = requests.get(f"{BASE}/stream/stop", timeout=3)
             print(f"[GoPro] ストリーム停止: {r.status_code}")
+        elif action == "stream_start_delayed":
+            print("[GoPro] Waiting 3 seconds for SSI to open UDP port...")
+            time.sleep(3) # SSIがポートを開くのを待つ
+            r = requests.get(f"{BASE}/stream/start", timeout=3)
+            print(f"[GoPro] ストリーム開始 (遅延実行): {r.status_code}")
     except Exception as e:
         print(f"[GoPro] エラー: {e}")
 

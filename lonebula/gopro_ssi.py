@@ -31,7 +31,7 @@ def trigger_gopro(action):
 
 def connect(opts, vars):
     print(">>> [SSI] WARM-UP PHASE: Pipeline connected. Waiting 30 seconds...")
-    trigger_gopro("stream_start")
+    # trigger_gopro("stream_start")
     vars['start_time'] = time.time()
     vars['has_started'] = False
     vars['state_val'] = 0.0  # ウォームアップ中は0を出力
@@ -40,7 +40,7 @@ def read(name, sout, reset, board, opts, vars):
     # 1. 状態の更新とトリガー発行
     if not vars['has_started']:
         elapsed = time.time() - vars['start_time']
-        if elapsed >= 30.0:
+        if elapsed >= 5.0:
             print("\n" + "="*60)
             print(">>> [SSI] 1 MINUTE ELAPSED: PRODUCTION START! Triggering GoPro...")
             trigger_gopro("start")       # GoProの録画を開始

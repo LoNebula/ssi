@@ -128,6 +128,18 @@
 				<input pin="depth" frame="1.0s"/>
 			</consumer> 
 		</gate>
+
+		<gate open="$(ffmpeg)">
+			<consumer create="FFMPEGWriter:recordgopro_mp4" url="data/$(date)/User$(userid)_gopro.mp4">
+				<input pin="gopro_video" frame="1" />
+			</consumer>
+		</gate>
+		
+		<gate close="$(ffmpeg)">
+			<consumer create="CameraWriter:recordgopro_avi" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_gopro.avi">
+				<input pin="gopro_video" frame="1" delta="0"/>
+			</consumer>	
+		</gate>
 	</gate>
 
 
@@ -158,7 +170,7 @@
 		</gate>	
 	</gate>
 
-	<sensor create="FFMPEGReader:receivegopro" url="udp://10.5.5.9:8554" fps="$(sr)" stream="true">		
+	<sensor create="FFMPEGReader:receivegopro" url="udp://@0.0.0.0:8554" fps="$(sr)" stream="true">	
 		<output channel="video" pin="gopro_video" size="$(buffersize)s"/>
 	</sensor>
 

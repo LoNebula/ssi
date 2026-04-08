@@ -10,11 +10,19 @@ set PYTHONHOME=%CONDA_PREFIX%
 set PYTHONPATH=C:\ssi\lonebula;%CONDA_PREFIX%\Lib;%CONDA_PREFIX%\DLLs
 
 echo --------------------------------------------------
-echo [SSI] Starting System
-echo ENV: %CONDA_PREFIX%
+echo [TEST] Starting GoPro Minimun Pipeline
 echo --------------------------------------------------
 
 cd /d C:\ssi\lonebula
-C:\ssi\bin\x64\vc140\xmlpipe.exe C:\ssi\lonebula\gopro.pipeline
 
-:: ★修正: ここにあった pause を削除しました
+:: 念のためゾンビ状態のストリームを停止
+echo [GoPro] Resetting stream state...
+python gopro_action.py stream_stop
+timeout /t 2 /nobreak >nul
+
+:: バックグラウンドで遅延スタートを仕掛ける (5秒後に起動)
+echo [GoPro] Initiating delayed stream start (5 sec)...
+start /b cmd /c "timeout /t 5 /nobreak >nul & python gopro_action.py stream_start"
+
+:: SSI起動
+C:\ssi\bin\x64\vc140\xmlpipe.exe C:\ssi\lonebula\gopro.pipeline
