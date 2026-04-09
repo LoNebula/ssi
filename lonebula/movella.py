@@ -67,10 +67,35 @@ def connect(opts, vars):
     t.daemon = True
     t.start()
     
+    print(">>> [SSI] Waiting for Movella to complete Bluetooth setup (Max 45s)...")
+    
+    # --- 修正ポイント：最初のデータが来るまでSSIの起動をブロックする ---
+    got_data = False
+    timeout = 45.0 
+    start_wait = time.time()
+    
+    while time.time() - start_wait < timeout:
+        if not q.empty():
+            got_data = True
+            break
+        time.sleep(0.5) # 0.5秒ごとにチェック
+        
+    if not got_data:
+        print(">>> [SSI] ERROR: Movella initialization timeout.")
+        return False # 失敗をSSIに伝え、パイプラインを停止させる
+    # -------------------------------------------------------------------
+
     vars['proc'] = proc
     vars['queue'] = q
-    vars['last_data'] = [0.0] * 9
-    vars['is_ready'] = False
+    vars['last_data'] = q.get() 
+    vars['is_ready'] = True
+    
+    print(">>> [SSI] Movella Ready! Starting synchronized pipeline.")
+    
+    # --- ここを追加：GoProに準備完了を知らせる ---
+    os.environ["SSI_MOVELLA_READY"] = "1"
+    # --------------------------------------------
+    
     return True
 
 def read(name, sout, reset, board, opts, vars):

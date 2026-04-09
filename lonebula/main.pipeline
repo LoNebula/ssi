@@ -23,11 +23,13 @@
 		<output channel="zed_skeleton" pin="skel" size="$(buffersize)s"/>
 	</sensor>
 
-	<sensor create="PythonSensor" script="gopro_ssi" syspath="C:\ssi\lonebula" block="1.0">
+	<framework console="true" sync="true" slisten="$(waitforsignal)" sport="6666" wait="5.0"/> 
+
+	<sensor create="PythonSensor" script="gopro_ssi" syspath="C:\ssi\lonebula" block="0.1" watch="0">
 		<output channel="state" pin="gopro_state"/>
 	</sensor>
 	
-	<sensor create="PythonSensor" script="movella" syspath="C:\ssi\lonebula" block="0.1">
+	<sensor create="PythonSensor" script="movella" syspath="C:\ssi\lonebula" block="0.1" watch="0">
 		<output channel="sensor" pin="movella_data" />
 	</sensor>
 
@@ -90,7 +92,7 @@
 		<execute name="save_end_time.bat" args="data\$(date)" type="post" wait="-1"/>
 	
 		<gate open="$(ffmpeg)">
-			<consumer create="FFMPEGWriter:recordvideo" url="data/$(date)/User$(userid)_video.mp4">
+			<consumer create="FFMPEGWriter:recordvideo" url="data/$(date)/User$(userid)_video.mp4" vcodec="libx265">
 				<input pin="video" frame="1" />
 			</consumer>
 		</gate>
@@ -102,7 +104,7 @@
 		</gate>
 
 		<gate open="$(ffmpeg)">
-			<consumer create="FFMPEGWriter:recordgopro_mp4" url="data/$(date)/User$(userid)_gopro.mp4">
+			<consumer create="FFMPEGWriter:recordgopro_mp4" url="data/$(date)/User$(userid)_gopro.mp4" vcodec="libx265">
 				<input pin="gopro_video" frame="1" />
 			</consumer>
 		</gate>

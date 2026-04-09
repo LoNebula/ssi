@@ -119,10 +119,10 @@ class XdpcHandler(movelladot_pc_sdk.XsDotCallback):
         listener = keyboard.Listener(on_press=on_press)
         listener.start()
 
-        print("Press any key or wait 20 seconds to stop scanning...")
+        print("Press any key or wait 5 seconds to stop scanning...")
         connectedDOTCount = 0
         startTime = movelladot_pc_sdk.XsTimeStamp_nowMs()
-        while waitForConnections and not self.errorReceived() and movelladot_pc_sdk.XsTimeStamp_nowMs() - startTime <= 20000:
+        while waitForConnections and not self.errorReceived() and movelladot_pc_sdk.XsTimeStamp_nowMs() - startTime <= 5000:
             time.sleep(0.1)
 
             nextCount = len(self.detectedDots())
