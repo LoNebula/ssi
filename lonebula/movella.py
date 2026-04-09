@@ -2,12 +2,14 @@ import subprocess
 import os
 import threading
 import queue
+import time
 
 PYTHON_EXE = r"C:\Users\shogo\anaconda3\envs\movella\python.exe"
 SCRIPT_PATH = r"C:\ssi\lonebula\movella_worker.py"
 
 def getOptions(opts, vars):
-    pass
+    # XMLから dir="data/$(date)" を受け取るための枠を定義
+    opts['dir'] = '.' 
 
 def getChannelNames(opts, vars):
     return { 'sensor' : 'Movella DOT 9-ch (Time, Quat, FreeAcc, Status)' }
@@ -21,24 +23,37 @@ def initChannel(name, channel, types, opts, vars):
 def enqueue_output(out, q):
     for line in iter(out.readline, b''):
         line_str = line.decode('utf-8', errors='ignore').strip()
-        if not line_str: continue
-        try:
-            vals = [float(x) for x in line_str.split(',')]
-            if len(vals) == 9: q.put(vals)
-            else: print(f"[Movella Worker] {line_str}")
-        except ValueError:
-            print(f"[Movella Worker] {line_str}")
+        if not line_str: 
+            continue
+        
+        # カンマで分割し、要素数がきっちり9個あるかチェック
+        parts = line_str.split(',')
+        if len(parts) == 9:
+            try:
+                vals = [float(x.strip()) for x in parts]
+                q.put(vals)
+            except ValueError:
+                # 数値変換に失敗した場合はログとして扱う
+                print(f"[Movella Worker Info] {line_str}")
+        else:
+            # 9要素のCSVでない出力（公式サンプルのprint文など）はすべてログとして表示
+            print(f"[Movella Worker Info] {line_str}")
+            
     out.close()
 
 def connect(opts, vars):
-    print(">>> [SSI] Starting Movella (Outputting 0s while scanning)...")
+    print(">>> [SSI] Starting Movella subprocess...")
     clean_env = os.environ.copy()
     clean_env.pop("PYTHONHOME", None)
     clean_env.pop("PYTHONPATH", None)
     
+    # 受け取った出力先ディレクトリ
+    out_dir = opts['dir'] 
+    
     try:
+        # 引数として out_dir を追加して起動
         proc = subprocess.Popen(
-            [PYTHON_EXE, "-u", SCRIPT_PATH],
+            [PYTHON_EXE, "-u", SCRIPT_PATH, out_dir],
             env=clean_env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
@@ -62,27 +77,24 @@ def read(name, sout, reset, board, opts, vars):
     q = vars['queue']
     last_data = vars['last_data']
     
-    # キューから最新の1つだけを取る、あるいは一定数で切り上げる
     got_new = False
-    max_pull = 10 # 1回の呼び出しで処理する最大フレーム数
-    count = 0
-    while not q.empty() and count < max_pull:
+    while not q.empty():
         try:
             last_data = q.get_nowait()
             got_new = True
-            count += 1
-        except queue.Empty: break
+        except queue.Empty: 
+            break
             
     if got_new and not vars['is_ready']:
         vars['is_ready'] = True
-        print(">>> [SSI] Movella Connected! Real data is now flowing.")
+        print(">>> [SSI] Movella Real Data Detected! Stream is unblocked.")
         
     vars['last_data'] = last_data
     
-    # sout.num (SSIが要求しているフレーム数) 分を埋める
     for i in range(sout.num):
         for d in range(9):
             sout[i, d] = last_data[d]
 
 def disconnect(opts, vars):
-    if 'proc' in vars: vars['proc'].terminate()
+    if 'proc' in vars: 
+        vars['proc'].terminate()
