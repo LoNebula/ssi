@@ -98,7 +98,7 @@
 		</gate>
 		
 		<gate close="$(ffmpeg)">
-			<consumer create="CameraWriter:camerawriter" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_video.avi">
+			<consumer create="CameraWriter:camerawriter" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_video.avi" vcodec="libx265">
 				<input pin="video" frame="1" delta="0"/>
 			</consumer>	
 		</gate>
@@ -110,7 +110,7 @@
 		</gate>
 		
 		<gate close="$(ffmpeg)">
-			<consumer create="CameraWriter:recordgopro_avi" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_gopro.avi">
+			<consumer create="CameraWriter:recordgopro_avi" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_gopro.avi" vcodec="libx265">
 				<input pin="gopro_video" frame="1" delta="0"/>
 			</consumer>	
 		</gate>
@@ -281,18 +281,18 @@
 	</gate>
 	
 	<gate close="$(portrait)">
-		<object create="Decorator" icon="true" title="Multimodal Monitoring">
+		<object create="Decorator" icon="true" title="Multimodal Monitoring - lonebula">
 			<area pos="0,0,300,1000">console</area>
 			
-			<area pos="300,0,540,400">plot</area>             
-			<area pos="840,0,540,400">plot_gopro_video</area>  
-			<area pos="1380,0,540,400">plot_depth</area>      
-			<area pos="300,400,810,300">plot_skel</area>       
-			<area pos="1110,400,810,300">plot_imu</area>        
-			<area pos="300,700,540,300">plot_movella</area>    
-			<area pos="840,700,540,300">plot_tamago</area>     
-			<area pos="1380,700,540,150">plot_close</area>      
-			<area pos="1380,850,540,150">plot_gopro</area>     
+			<area pos="0,0,540,350">plot</area>             
+			<area pos="1100,0,540,350">plot_gopro_video</area>  
+			<area pos="600,0,540,350">plot_depth</area>      
+			<area pos="0,350,810,350">plot_skel</area>       
+			<area pos="810,350,810,350">plot_imu</area>       
+			<area pos="0,700,540,300">plot_movella</area>    
+			<area pos="600,700,540,300">plot_tamago</area>     
+			<area pos="1100,700,540,150">plot_close</area>     
+			<area pos="1100,850,540,150">plot_gopro</area>     
 		</object>
 	</gate>
 </pipeline>
