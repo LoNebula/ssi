@@ -92,25 +92,25 @@
 		<execute name="save_end_time.bat" args="data\$(date)" type="post" wait="-1"/>
 	
 		<gate open="$(ffmpeg)">
-			<consumer create="FFMPEGWriter:recordvideo" url="data/$(date)/User$(userid)_video.mp4" vcodec="libx265">
+			<consumer create="FFMPEGWriter:recordvideo" url="data/$(date)/User$(userid)_video.mp4" vcodec="libx264">
 				<input pin="video" frame="1" />
 			</consumer>
 		</gate>
 		
 		<gate close="$(ffmpeg)">
-			<consumer create="CameraWriter:camerawriter" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_video.avi" vcodec="libx265">
+			<consumer create="CameraWriter:camerawriter" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_video.avi">
 				<input pin="video" frame="1" delta="0"/>
 			</consumer>	
 		</gate>
 
 		<gate open="$(ffmpeg)">
-			<consumer create="FFMPEGWriter:recordgopro_mp4" url="data/$(date)/User$(userid)_gopro.mp4" vcodec="libx265">
+			<consumer create="FFMPEGWriter:recordgopro_mp4" url="data/$(date)/User$(userid)_gopro.mp4" vcodec="libx264">
 				<input pin="gopro_video" frame="1" />
 			</consumer>
 		</gate>
 		
 		<gate close="$(ffmpeg)">
-			<consumer create="CameraWriter:recordgopro_avi" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_gopro.avi" vcodec="libx265">
+			<consumer create="CameraWriter:recordgopro_avi" flip="false" option="options/camerawriter" path="data/$(date)/User$(userid)_gopro.avi">
 				<input pin="gopro_video" frame="1" delta="0"/>
 			</consumer>	
 		</gate>
@@ -286,11 +286,11 @@
 			
 			<area pos="0,0,540,350">plot</area>             
 			<area pos="1100,0,540,350">plot_gopro_video</area>  
-			<area pos="600,0,540,350">plot_depth</area>      
+			<area pos="550,0,540,350">plot_depth</area>      
 			<area pos="0,350,810,350">plot_skel</area>       
 			<area pos="810,350,810,350">plot_imu</area>       
 			<area pos="0,700,540,300">plot_movella</area>    
-			<area pos="600,700,540,300">plot_tamago</area>     
+			<area pos="550,700,540,300">plot_tamago</area>     
 			<area pos="1100,700,540,150">plot_close</area>     
 			<area pos="1100,850,540,150">plot_gopro</area>     
 		</object>

@@ -17,7 +17,7 @@ DOT3:D4:22:CD:07:AB:5B
 DOT4:D4:22:CD:07:AA:B5
 """
 
-TARGET_MAC = "D4:22:CD:07:AA:B5"
+TARGET_MAC = "D4:22:CD:07:AB:58"
 
 def main():
     # コマンドライン引数からディレクトリを取得 (指定がなければカレント)
