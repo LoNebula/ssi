@@ -124,6 +124,7 @@ namespace ssi {
         sl::Camera _zed;
         sl::Mat _rgb;
         sl::Mat _depth_image;
+        sl::BodyTrackingRuntimeParameters _body_tracker_parameters_rt;
         ssi_char_t* _file;
     };
 }

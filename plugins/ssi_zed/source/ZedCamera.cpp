@@ -1,7 +1,5 @@
 #include "pch.h"
 #include "ZedCamera.h"
-#include <thread>
-#include <chrono>
 
 namespace ssi {
 
@@ -107,80 +105,73 @@ namespace ssi {
             }
         }
 
+        _body_tracker_parameters_rt.detection_confidence_threshold = 40;
+
         ssi_msg(SSI_LOG_LEVEL_BASIC, "ZED connected (All Modules Ready)");
         return true;
     }
 
     void ZedCamera::run() {
-        // 骨格トラッキング用のランタイムパラメータ
-        sl::BodyTrackingRuntimeParameters body_tracker_parameters_rt;
-        body_tracker_parameters_rt.detection_confidence_threshold = 40;
+        sl::ERROR_CODE err = _zed.grab();
 
-        while (true) {
-            sl::ERROR_CODE err = _zed.grab();
+        if (err != sl::ERROR_CODE::SUCCESS) {
+            sleep_ms(1);
+            return;
+        }
 
-            if (err != sl::ERROR_CODE::SUCCESS) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                continue;
-            }
+        // 1. RGB
+        if (_provider_rgb) {
+            _zed.retrieveImage(_rgb, sl::VIEW::LEFT, sl::MEM::CPU);
+            unsigned char* src = _rgb.getPtr<sl::uchar1>();
+            Lock lock(_mutex);
+            _provider_rgb->provide((ssi_byte_t*)src, 1);
+        }
 
-            // 1. RGB
-            if (_provider_rgb) {
-                _zed.retrieveImage(_rgb, sl::VIEW::LEFT, sl::MEM::CPU);
-                unsigned char* src = _rgb.getPtr<sl::uchar1>();
+        // 2. Depth
+        if (_provider_depth) {
+            _zed.retrieveImage(_depth_image, sl::VIEW::DEPTH, sl::MEM::CPU);
+            unsigned char* src_depth = _depth_image.getPtr<sl::uchar1>();
+            Lock lock(_mutex);
+            _provider_depth->provide((ssi_byte_t*)src_depth, 1);
+        }
+
+        // 3. IMU
+        if (_provider_imu) {
+            sl::SensorsData sensors_data;
+            if (_zed.getSensorsData(sensors_data, sl::TIME_REFERENCE::IMAGE) == sl::ERROR_CODE::SUCCESS) {
+                float imu_buf[6];
+                imu_buf[0] = sensors_data.imu.linear_acceleration.x;
+                imu_buf[1] = sensors_data.imu.linear_acceleration.y;
+                imu_buf[2] = sensors_data.imu.linear_acceleration.z;
+                imu_buf[3] = sensors_data.imu.angular_velocity.x;
+                imu_buf[4] = sensors_data.imu.angular_velocity.y;
+                imu_buf[5] = sensors_data.imu.angular_velocity.z;
+
                 Lock lock(_mutex);
-                _provider_rgb->provide((ssi_byte_t*)src, 1);
+                _provider_imu->provide((ssi_byte_t*)imu_buf, 1);
             }
+        }
 
-            // 2. Depth
-            if (_provider_depth) {
-                _zed.retrieveImage(_depth_image, sl::VIEW::DEPTH, sl::MEM::CPU);
-                unsigned char* src_depth = _depth_image.getPtr<sl::uchar1>();
-                Lock lock(_mutex);
-                _provider_depth->provide((ssi_byte_t*)src_depth, 1);
-            }
+        // 4. Skeleton (骨格)
+        if (_provider_skeleton) {
+            sl::Bodies bodies;
+            // 102個(34関節×3次元)のゼロ配列を用意
+            float skel_buf[102] = { 0.0f };
 
-            // 3. IMU
-            if (_provider_imu) {
-                sl::SensorsData sensors_data;
-                if (_zed.getSensorsData(sensors_data, sl::TIME_REFERENCE::IMAGE) == sl::ERROR_CODE::SUCCESS) {
-                    float imu_buf[6];
-                    imu_buf[0] = sensors_data.imu.linear_acceleration.x;
-                    imu_buf[1] = sensors_data.imu.linear_acceleration.y;
-                    imu_buf[2] = sensors_data.imu.linear_acceleration.z;
-                    imu_buf[3] = sensors_data.imu.angular_velocity.x;
-                    imu_buf[4] = sensors_data.imu.angular_velocity.y;
-                    imu_buf[5] = sensors_data.imu.angular_velocity.z;
-
-                    Lock lock(_mutex);
-                    _provider_imu->provide((ssi_byte_t*)imu_buf, 1);
-                }
-            }
-
-            // 4. ★Skeleton (骨格)
-            if (_provider_skeleton) {
-                sl::Bodies bodies;
-                // 102個(34関節×3次元)のゼロ配列を用意
-                float skel_buf[102] = { 0.0f };
-
-                if (_zed.retrieveBodies(bodies, body_tracker_parameters_rt) == sl::ERROR_CODE::SUCCESS) {
-                    // 人が1人以上検出された場合、一番最初の人(index 0)の骨格データを取得
-                    if (bodies.body_list.size() > 0) {
-                        auto& body = bodies.body_list[0];
-
-                        // 34個のキーポイント(XYZ)を順番に配列に詰める
-                        for (int i = 0; i < 34; i++) {
-                            skel_buf[i * 3 + 0] = body.keypoint[i].x;
-                            skel_buf[i * 3 + 1] = body.keypoint[i].y;
-                            skel_buf[i * 3 + 2] = body.keypoint[i].z;
-                        }
+            if (_zed.retrieveBodies(bodies, _body_tracker_parameters_rt) == sl::ERROR_CODE::SUCCESS) {
+                if (bodies.body_list.size() > 0) {
+                    auto& body = bodies.body_list[0];
+                    for (int i = 0; i < 34; i++) {
+                        skel_buf[i * 3 + 0] = body.keypoint[i].x;
+                        skel_buf[i * 3 + 1] = body.keypoint[i].y;
+                        skel_buf[i * 3 + 2] = body.keypoint[i].z;
                     }
                 }
-
-                // 人がいなくても0の波形を送り続け、SSIの同期を止めない
-                Lock lock(_mutex);
-                _provider_skeleton->provide((ssi_byte_t*)skel_buf, 1);
             }
+
+            // 人がいなくても0の波形を送り続け、SSIの同期を止めない
+            Lock lock(_mutex);
+            _provider_skeleton->provide((ssi_byte_t*)skel_buf, 1);
         }
     }
 
